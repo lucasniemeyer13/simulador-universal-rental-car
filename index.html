@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>Simulador Universal Rental Car</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+<style>
+/* Assistente passo a passo. Identidade inspirada no IESE em tema claro único (decisão deliberada): vermelho institucional,
+   carvão, superfícies claras. Layout: cabeçalho com passos; um painel por passo em coluna de 1.200px; cartões em grade. */
+:root {
+  --bg: #f7f5f3; --surface: #ffffff; --surface-2: #f1edeb; --fg: #1d1d1b; --muted: #6a6663; --ink2: #4a4745;
+  --line: #ddd7d3; --grid: #e9e4e0; --red: #a6192e; --red-fg: #ffffff; --red-soft: #f7e6e9; --good: #1b6e3a; --good-soft: #e6f3ea; --warn: #8a5a00; --warn-soft: #fbf1dc; --bad: #a6192e;
+  --s1: #a6192e; --s2: #2a78d6; --s3: #1baf7a; --s4: #4a3aa7;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-ui: "Source Sans 3", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Source Code Pro", "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.45; margin: 0; padding-block: 0 56px; padding-inline: 16px; }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); background: var(--surface); z-index: 5; border-bottom: 4px solid var(--red); margin-inline: -16px; padding: 10px 16px 8px; box-shadow: 0 1px 0 var(--line); }
+.wrap { max-width: 1200px; margin: 0 auto; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand .mark { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--red); letter-spacing: 0.02em; }
+.brand .mark span { color: var(--fg); font-weight: 600; }
+.brand small { color: var(--muted); font-size: 12px; }
+.steps { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.steps button { background: var(--surface-2); border: 1px solid var(--line); border-radius: 20px; color: var(--ink2); font: inherit; font-weight: 600; font-size: 13px; padding: 5px 12px 5px 8px; cursor: pointer; display: flex; align-items: center; gap: 7px; }
+.steps button b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--line); color: var(--fg); font-size: 11.5px; }
+.steps button[aria-selected="true"] { background: var(--red); color: var(--red-fg); border-color: var(--red); }
+.steps button[aria-selected="true"] b { background: #fff; color: var(--red); }
+.steps button.tool { border-style: dashed; }
+.steps button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.panel { padding-top: 16px; }
+.guide { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--red); border-radius: 4px; padding: 12px 16px; margin-bottom: 14px; }
+.guide h2 { margin: 0 0 4px; }
+.guide ol { margin: 6px 0 0; padding-left: 20px; } .guide li { margin-bottom: 3px; }
+h2 { font-family: var(--font-display); font-size: 19px; font-weight: 600; margin: 22px 0 8px; text-wrap: balance; }
+h3 { font-size: 11.5px; margin: 14px 0 6px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.08em; }
+p { margin: 0 0 8px; max-width: 78ch; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid.two { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.grid > * { min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; }
+.card h3 { margin-top: 0; }
+.card.off { opacity: 0.55; }
+label.f { display: grid; grid-template-columns: 1fr 100px; align-items: center; gap: 8px; margin: 5px 0; font-size: 13.5px; }
+label.f span.hint { color: var(--muted); font-size: 11px; display: block; }
+label.f .pair { display: flex; gap: 4px; }
+input[type=number], input[type=text], select, textarea { font: inherit; font-family: var(--font-mono); font-size: 12.5px; color: var(--fg); background: #fff; border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px; width: 100%; min-width: 0; }
+input[type=number] { text-align: right; }
+input:disabled { background: var(--surface-2); color: var(--muted); }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--red); outline-offset: 1px; }
+textarea { font-size: 11.5px; height: 110px; }
+button.b { font: inherit; font-weight: 600; font-size: 13px; background: var(--red); color: var(--red-fg); border: 0; border-radius: 3px; padding: 7px 12px; cursor: pointer; }
+button.b.sec { background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
+button.b.sm { padding: 3px 8px; font-size: 12px; }
+button.b.big { font-size: 15px; padding: 10px 18px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+.nav { display: flex; justify-content: space-between; gap: 8px; margin: 18px 0 0; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { border-bottom: 1px solid var(--line); padding: 4px 7px; text-align: right; white-space: nowrap; }
+th { color: var(--muted); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+th.l, td.l { text-align: left; }
+td input[type=number] { width: 64px; padding: 2px 4px; }
+td.best { font-weight: 700; color: var(--red); }
+tr.cur td { background: var(--red-soft); }
+tr.done td { color: var(--ink2); }
+tr.tot td { font-weight: 700; background: var(--surface-2); }
+.curve input[type=number] { width: 54px; }
+.curve { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.curve div { font-size: 11px; color: var(--muted); text-align: center; }
+.kpis { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 10px 0; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; border-top: 4px solid var(--line); }
+.kpi.hero .v { font-size: 28px; font-family: var(--font-display); }
+.kpi.u { border-top-color: var(--s1); } .kpi.c { border-top-color: var(--s2); } .kpi.g { border-top-color: var(--s3); }
+.kpi .v { font-size: 20px; font-weight: 600; }
+.kpi .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.kpi .d { font-size: 11.5px; color: var(--ink2); }
+.kpi .d.up { color: var(--good); } .kpi .d.down { color: var(--bad); }
+.ok { color: var(--good); font-weight: 600; } .warn { color: var(--warn); font-weight: 600; } .bad { color: var(--bad); font-weight: 600; }
+.note { color: var(--muted); font-size: 12.5px; }
+.heat td { padding: 2px 5px; font-size: 11.5px; }
+.toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: #fff; padding: 8px 14px; border-radius: 4px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+.mono { font-family: var(--font-mono); font-size: 12px; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 10px; background: var(--red-soft); color: var(--red); font-size: 11.5px; font-weight: 700; }
+.pill.g { background: var(--good-soft); color: var(--good); } .pill.w { background: var(--warn-soft); color: var(--warn); }
+.chart { width: 100%; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .title { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+.chart .sub { font-size: 11.5px; color: var(--muted); margin: 0 0 6px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink2); margin: 4px 0 2px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+.legend i.dot { border-radius: 50%; }
+svg text { fill: var(--muted); font-size: 10.5px; font-family: var(--font-ui); }
+svg text.v { fill: var(--ink2); font-weight: 600; }
+svg .grid line { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .hit { fill: transparent; } svg .hit:hover { fill: var(--fg); fill-opacity: 0.06; }
+.regbox { border-left: 5px solid var(--s3); }
+.choice { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.choice label { display: block; border: 2px solid var(--line); border-radius: 6px; padding: 12px 14px; cursor: pointer; background: var(--surface); }
+.choice label.on { border-color: var(--red); background: var(--red-soft); }
+.choice label b { display: block; font-size: 15px; margin-bottom: 4px; }
+.choice label input { margin-right: 6px; }
+.reco { background: var(--good-soft); border: 1px solid #bfe0c9; border-radius: 4px; padding: 10px 14px; }
+.reco .big { font-family: var(--font-display); font-size: 26px; color: var(--good); font-weight: 700; }
+.month-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.month-head .m { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
+.progress { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin: 8px 0 12px; }
+.progress div { height: 100%; background: var(--red); }
+</style>
+<style>img{max-width:100%} [hidden]{display:none!important}</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+<div class="brand"><div class="mark">IESE <span>· Simulador Universal Rental Car</span></div><small>assistente passo a passo · motor replicado da Pricing Simulation (HBP/Forio), validado ao dólar na rodada de treino de 17/10/2026</small></div>
+<div class="steps" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="s1"><b>1</b>Rodada</button>
+  <button role="tab" aria-selected="false" data-tab="s2"><b>2</b>Regiões</button>
+  <button role="tab" aria-selected="false" data-tab="s3"><b>3</b>Parâmetros</button>
+  <button role="tab" aria-selected="false" data-tab="s4"><b>4</b>Mês a mês</button>
+  <button role="tab" aria-selected="false" data-tab="s5"><b>5</b>Resultados</button>
+  <button role="tab" aria-selected="false" data-tab="month" class="tool">Ferramenta · um mês</button>
+  <button role="tab" aria-selected="false" data-tab="compare" class="tool">Ferramenta · políticas</button>
+  <button role="tab" aria-selected="false" data-tab="check" class="tool">Dados reais e checagem</button>
+</div>
+</div></header>
+
+<main class="wrap">
+
+<!-- ================= PASSO 1 · RODADA ================= -->
+<section class="panel" id="panel-s1">
+<div class="guide"><h2>Passo 1 · Escolha a rodada</h2>
+<ol><li>Marque qual rodada vai jogar. A rodada 1 tem frota fixa; a rodada 2 permite ajustar a frota a cada três meses.</li><li>Confirme o primeiro mês e o número de meses (as rodadas valendo têm 12 meses).</li><li>Se quiser, carregue um cenário guardado ou guarde o atual com um nome.</li></ol></div>
+<div class="choice" id="round-choice">
+  <label class="on"><input type="radio" name="rmode" value="treino"><b>Rodada de treino</b>Tampa, 11 meses (novembro a setembro), frota fixa. É o que foi jogado em 17/10.</label>
+  <label><input type="radio" name="rmode" value="r1"><b>Rodada 1 · frota fixa</b>12 meses a partir de outubro. Só preços. Frota travada em cada região.</label>
+  <label><input type="radio" name="rmode" value="r2"><b>Rodada 2 · frota ajustável</b>12 meses. Preços e frota por trimestre (outubro, janeiro, abril, julho).</label>
+</div>
+<div class="grid two" style="margin-top:14px">
+  <div class="card">
+    <h3>Calendário</h3>
+    <label class="f"><span>Primeiro mês decidido</span><select id="r-start"></select></label>
+    <label class="f"><span>Número de meses</span><input type="number" id="r-n" value="11" min="1" max="24"></label>
+    <label class="f"><span>Preço inicial sugerido da Universal (sem / fds)<span class="hint">preenche a tabela do passo 4</span></span><span class="pair"><input type="number" id="r-u0-wd" value="51"><input type="number" id="r-u0-we" value="39"></span></label>
+    <label class="f"><span>Faixa da melhor resposta: semana de / até</span><span class="pair"><input type="number" id="r-br-wd-lo" value="35"><input type="number" id="r-br-wd-hi" value="75"></span></label>
+    <label class="f"><span>Faixa da melhor resposta: fim de semana de / até</span><span class="pair"><input type="number" id="r-br-we-lo" value="25"><input type="number" id="r-br-we-hi" value="60"></span></label>
+  </div>
+  <div class="card">
+    <h3>Cenários guardados</h3>
+    <p class="note">Um cenário guarda tudo: rodada, regiões, parâmetros, tabela mês a mês e dados reais.</p>
+    <div class="row"><select id="sc-list" style="max-width:240px"></select><button class="b sec" id="sc-load">Carregar</button><button class="b sec" id="sc-del">Excluir</button></div>
+    <div class="row"><input type="text" id="sc-name" placeholder="nome do cenário" style="max-width:240px"><button class="b" id="sc-save">Guardar atual como</button></div>
+    <div class="row"><button class="b sec" id="sc-export">Exportar (JSON)</button><button class="b sec" id="sc-import">Importar do campo</button><button class="b sec" id="sc-reset">Voltar ao padrão</button></div>
+    <textarea id="sc-io" placeholder="JSON do cenário"></textarea>
+  </div>
+</div>
+<div class="nav"><span></span><button class="b big" data-go="s2">Próximo: regiões →</button></div>
+</section>
+
+<!-- ================= PASSO 2 · REGIÕES ================= -->
+<section class="panel" id="panel-s2" hidden>
+<div class="guide"><h2>Passo 2 · Regiões em jogo</h2>
+<ol><li>Tampa já vem com os valores extraídos. Orlando e Miami vêm pré-cadastradas com o que o dump mostrou (demanda 4x em Orlando; Miami com premissa 2x) e desligadas.</li><li>Se a tela "From Management" mostrar mais cidades, ligue a região e confira frota e preços iniciais nos campos.</li><li>Em cada região, escolha o comportamento do concorrente: "manual" se você vai digitar o preço real dele a cada mês (recomendado nas rodadas valendo).</li></ol></div>
+<div class="row"><button class="b sec" id="reg-add">Adicionar outra região</button><span class="note" id="reg-total"></span></div>
+<div class="grid" id="reg-list"></div>
+<div class="nav"><button class="b sec" data-go="s1">← Rodada</button><button class="b big" data-go="s3">Próximo: parâmetros →</button></div>
+</section>
+
+<!-- ================= PASSO 3 · PARÂMETROS ================= -->
+<section class="panel" id="panel-s3" hidden>
+<div class="guide"><h2>Passo 3 · Parâmetros do motor</h2>
+<ol><li>Tudo já está preenchido com os valores extraídos e validados. Só mexa se a rodada valendo mostrar algo diferente (por exemplo sazonalidade ligada ou custo de inventário diferente na tela Net Income).</li><li>A aba "Dados reais e checagem" mostra se o modelo continua batendo com o que a tela mostra.</li></ol></div>
+<div class="grid">
+  <div class="card">
+    <h3>Demanda</h3>
+    <label class="f"><span>Demanda base (carros/dia)<span class="hint">Base Daily Vehicle Demand</span></span><input type="number" id="p-base" step="10"></label>
+    <label class="f"><span>Peso business · semana</span><input type="number" id="p-wd-bwd" step="0.1"></label>
+    <label class="f"><span>Peso business · fim de semana</span><input type="number" id="p-wd-bwe" step="0.1"></label>
+    <label class="f"><span>Peso turista · semana</span><input type="number" id="p-wd-twd" step="0.1"></label>
+    <label class="f"><span>Peso turista · fim de semana</span><input type="number" id="p-wd-twe" step="0.1"></label>
+    <label class="f"><span>Crescimento mensal da demanda<span class="hint">0 no cenário A</span></span><input type="number" id="p-growth" step="0.005"></label>
+    <label class="f"><span>Usar sazonalidade</span><select id="p-season"><option value="0">não</option><option value="1">sim</option></select></label>
+  </div>
+  <div class="card">
+    <h3>Divisão do mercado</h3>
+    <label class="f"><span>Sensibilidade a preço · business</span><input type="number" id="p-sens-b" step="0.5"></label>
+    <label class="f"><span>Sensibilidade a preço · turista</span><input type="number" id="p-sens-t" step="0.5"></label>
+    <label class="f"><span>Atratividade Universal</span><input type="number" id="p-attr-u" step="0.05"></label>
+    <label class="f"><span>Atratividade concorrente</span><input type="number" id="p-attr-c" step="0.05"></label>
+    <label class="f"><span>Multiplicador da demanda compartilhada</span><input type="number" id="p-shared" step="1"></label>
+    <label class="f"><span>Multiplicador da demanda exclusiva</span><input type="number" id="p-unshared" step="1"></label>
+    <label class="f"><span>Peso da estimativa de preço na divisão (k)</span><input type="number" id="p-k" step="0.01"></label>
+  </div>
+  <div class="card">
+    <h3>Custos · Universal</h3>
+    <label class="f"><span>Custo variável por diária</span><input type="number" id="p-uvc-u" step="0.5"></label>
+    <label class="f"><span>Custo de inventário por carro/mês<span class="hint">Unit Capacity Costs</span></span><input type="number" id="p-inv-u" step="1"></label>
+    <label class="f"><span>Outros custos fixos por mês (Tampa)</span><input type="number" id="p-oth-u" step="1000"></label>
+    <label class="f"><span>Outros fixos acompanham a frota?<span class="hint">premissa para a rodada 2</span></span><select id="p-oth-mode"><option value="fixo">não (ficam fixos)</option><option value="carro">sim (210,48/carro)</option></select></label>
+    <label class="f"><span>Limite da frota (Tampa)<span class="hint">Capacity Limit, +5%</span></span><input type="number" id="p-cap-lim" step="10"></label>
+  </div>
+  <div class="card">
+    <h3>Custos · Concorrente e calendário</h3>
+    <label class="f"><span>Custo variável por diária</span><input type="number" id="p-uvc-c" step="0.5"></label>
+    <label class="f"><span>Custo de inventário por carro/mês</span><input type="number" id="p-inv-c" step="1"></label>
+    <label class="f"><span>Outros custos fixos por mês (Tampa)</span><input type="number" id="p-oth-c" step="1000"></label>
+    <label class="f"><span>Dias de semana por semana</span><input type="number" id="p-days-wd" step="1"></label>
+    <label class="f"><span>Dias de fim de semana por semana</span><input type="number" id="p-days-we" step="1"></label>
+    <label class="f"><span>Semanas por mês</span><input type="number" id="p-weeks" step="0.01"></label>
+  </div>
+</div>
+<h2>Curvas de demanda</h2>
+<div class="row"><span>Preset:</span><button class="b sec sm" data-preset="normal">Normal (cenário A)</button><button class="b sec sm" data-preset="flat">Flat</button><button class="b sec sm" data-preset="steep">Steep</button>
+  <label class="f" style="grid-template-columns:auto 80px"><span>Deslocamento de preço (premissa)</span><input type="number" id="p-offset" step="1"></label></div>
+<div class="grid two"><div class="card"><div class="chart" id="ch-curves"></div></div><div class="card"><h3>Business (BDC)</h3><div class="curve" id="curve-b"></div><h3 style="margin-top:12px">Turista (LDC)</h3><div class="curve" id="curve-t"></div></div></div>
+<h2>Sazonalidade (tabela de Tampa; aplicada só se ligada)</h2>
+<div class="grid two"><div class="card"><div class="chart" id="ch-season"></div></div><div class="card"><div class="tbl"><table id="season-tbl"></table></div></div></div>
+<div class="nav"><button class="b sec" data-go="s2">← Regiões</button><button class="b big" data-go="s4">Próximo: jogar mês a mês →</button></div>
+</section>
+
+<!-- ================= PASSO 4 · MÊS A MÊS ================= -->
+<section class="panel" id="panel-s4" hidden>
+<div class="guide"><h2>Passo 4 · Jogue mês a mês</h2>
+<ol><li>Na tela do simulador oficial, abra Price History e anote o preço do concorrente do mês que vai decidir. Digite abaixo.</li><li>Na rodada 2, no início de cada trimestre, decida a frota (o assistente sugere).</li><li>Veja a recomendação e clique em "Usar recomendação" (ou digite outro preço). Digite no simulador oficial e avance lá.</li><li>Depois que a tela mostrar o resultado, registre o lucro e o share observados (opcional) e clique em "Mês concluído". O assistente passa ao mês seguinte.</li></ol></div>
+<div class="card" id="m4-card"></div>
+<div class="row" style="margin-top:12px"><button class="b sec" id="btn-r-simulate">Planejar tudo com concorrente simulado (sem jogar)</button><button class="b sec" id="btn-r-reset">Recomeçar a rodada</button><button class="b sec" id="btn-r-copy">Copiar tabela</button></div>
+<div id="r-tables"></div>
+<div class="nav"><button class="b sec" data-go="s3">← Parâmetros</button><button class="b big" data-go="s5">Ver resultados →</button></div>
+</section>
+
+<!-- ================= PASSO 5 · RESULTADOS ================= -->
+<section class="panel" id="panel-s5" hidden>
+<div class="guide"><h2>Passo 5 · Resultados e métricas da gerência</h2>
+<ol><li>As cinco métricas que a gerência avalia, na ordem dela, para a rodada montada no passo 4.</li><li>Compare com a referência "manter 43/32" e, na rodada 2, com a rodada 1 (guarde a rodada 1 como cenário e carregue-a para comparar).</li><li>Use "Copiar tabela" no passo 4 para levar os números ao relatório de uma página.</li></ol></div>
+<div class="kpis" id="r-kpis"></div>
+<div class="grid two">
+  <div class="card"><div class="chart" id="ch-r-profit"></div></div>
+  <div class="card"><div class="chart" id="ch-r-cum"></div></div>
+  <div class="card"><div class="chart" id="ch-r-pwd"></div></div>
+  <div class="card"><div class="chart" id="ch-r-pwe"></div></div>
+  <div class="card"><div class="chart" id="ch-r-util"></div></div>
+  <div class="card"><div class="chart" id="ch-r-share"></div></div>
+</div>
+<div class="nav"><button class="b sec" data-go="s4">← Mês a mês</button><span></span></div>
+</section>
+
+<!-- ================= FERRAMENTA · UM MÊS ================= -->
+<section class="panel" id="panel-month" hidden>
+<div class="guide"><h2>Ferramenta · Um mês</h2><p>Calculadora de um mês para qualquer par de preços: resultado, breakeven, melhor resposta e mapa de lucro.</p></div>
+<div class="grid">
+  <div class="card">
+    <h3>Preços do mês</h3>
+    <label class="f"><span>Região</span><select id="m-reg"></select></label>
+    <label class="f"><span>Universal · semana</span><input type="number" id="m-pu-wd" step="1"></label>
+    <label class="f"><span>Universal · fim de semana</span><input type="number" id="m-pu-we" step="1"></label>
+    <label class="f"><span>Concorrente · semana</span><input type="number" id="m-pc-wd" step="1"></label>
+    <label class="f"><span>Concorrente · fim de semana</span><input type="number" id="m-pc-we" step="1"></label>
+    <label class="f"><span>Mês (sazonalidade e crescimento)</span><select id="m-step"></select></label>
+    <label class="f"><span>Frota Universal neste mês<span class="hint">vazio = frota da região</span></span><input type="number" id="m-cap" step="10"></label>
+    <label class="f"><span>Referência para os deltas (sem / fds)</span><span class="pair"><input type="number" id="m-ref-wd" value="43"><input type="number" id="m-ref-we" value="32"></span></label>
+  </div>
+  <div class="card">
+    <h3>Calculadora de breakeven</h3>
+    <p class="note">ΔQ% = −ΔP / (margem + ΔP). Ao lado, o que o modelo prevê.</p>
+    <label class="f"><span>Novo preço · semana</span><input type="number" id="be-wd" step="1"></label>
+    <label class="f"><span>Novo preço · fim de semana</span><input type="number" id="be-we" step="1"></label>
+    <div class="tbl"><table id="be-tbl"></table></div>
+  </div>
+  <div class="card">
+    <h3>Melhor resposta ao concorrente</h3>
+    <label class="f"><span>Semana: de / até</span><span class="pair"><input type="number" id="br-wd-lo" value="30"><input type="number" id="br-wd-hi" value="75"></span></label>
+    <label class="f"><span>Fim de semana: de / até</span><span class="pair"><input type="number" id="br-we-lo" value="20"><input type="number" id="br-we-hi" value="60"></span></label>
+    <div class="row"><button class="b" id="btn-br">Calcular e aplicar</button></div>
+    <div id="br-out" class="note"></div>
+  </div>
+</div>
+<div class="kpis" id="m-kpis"></div>
+<div class="grid two">
+  <div class="card"><div class="chart" id="ch-profit-wd"></div></div>
+  <div class="card"><div class="chart" id="ch-profit-we"></div></div>
+  <div class="card"><div class="chart" id="ch-util"></div></div>
+  <div class="card"><div class="chart" id="ch-income"></div></div>
+</div>
+<div class="grid two">
+  <div class="card"><h3>Pedidos por célula (por dia)</h3><div class="tbl"><table id="m-cells"></table></div></div>
+  <div class="card"><h3>Demonstração de resultados do mês</h3><div class="tbl"><table id="m-income"></table></div></div>
+</div>
+<h2>Lucro mensal por par de preços (concorrente fixo)</h2>
+<div class="row">
+  <label class="f" style="grid-template-columns:auto 70px"><span>Semana de</span><input type="number" id="hm-wd-lo" value="40"></label>
+  <label class="f" style="grid-template-columns:auto 70px"><span>até</span><input type="number" id="hm-wd-hi" value="60"></label>
+  <label class="f" style="grid-template-columns:auto 70px"><span>Fim de semana de</span><input type="number" id="hm-we-lo" value="28"></label>
+  <label class="f" style="grid-template-columns:auto 70px"><span>até</span><input type="number" id="hm-we-hi" value="50"></label>
+  <label class="f" style="grid-template-columns:auto 70px"><span>passo</span><input type="number" id="hm-step" value="2"></label>
+</div>
+<div class="tbl heat"><table id="heat"></table></div>
+</section>
+
+<!-- ================= FERRAMENTA · POLÍTICAS ================= -->
+<section class="panel" id="panel-compare" hidden>
+<div class="guide"><h2>Ferramenta · Comparar políticas</h2><p>Lucro acumulado de várias políticas contra cinco comportamentos do concorrente, na região escolhida.</p></div>
+<div class="card">
+  <p class="note">Uma por linha: <span class="mono">50/38</span> (fixo), <span class="mono">escada 45/34 -> 51/39 +2</span>, <span class="mono">melhor resposta</span>, <span class="mono">seguir</span>, <span class="mono">undercut 1</span>, <span class="mono">seq 51/39,51/39,46/34,...</span>.</p>
+  <textarea id="cmp-pols">43/32
+48/36
+50/38
+51/39
+52/44
+50/48
+escada 45/34 -> 51/39 +2
+melhor resposta
+seguir
+undercut 1</textarea>
+  <div class="row">
+    <label class="f" style="grid-template-columns:auto 120px"><span>Região</span><select id="cmp-reg"></select></label>
+    <label class="f" style="grid-template-columns:auto 60px"><span>Meses</span><input type="number" id="cmp-n" value="10"></label>
+    <label class="f" style="grid-template-columns:auto 110px"><span>Primeiro mês</span><select id="cmp-start"></select></label>
+    <label class="f" style="grid-template-columns:auto 110px"><span>Frota (vazio = região)</span><input type="number" id="cmp-cap"></label>
+    <button class="b" id="btn-cmp">Comparar</button>
+  </div>
+</div>
+<div class="card" style="margin-top:12px"><div class="chart" id="ch-cmp"></div></div>
+<div class="tbl"><table id="cmp-tbl"></table></div>
+</section>
+
+<!-- ================= DADOS REAIS E CHECAGEM ================= -->
+<section class="panel" id="panel-check" hidden>
+<div class="guide"><h2>Dados reais e checagem</h2><p>Os meses observados até agora já estão carregados (histórico, decisão do grupo e rodada jogada em 17/10). Acrescente o que a tela mostrar nas rodadas valendo; cada linha é comparada com o modelo.</p></div>
+<div class="grid two">
+  <div class="card">
+    <h3>Meses observados</h3>
+    <div class="row"><button class="b sec" id="dt-add">Adicionar linha</button><button class="b sec" id="dt-clear">Limpar</button><button class="b sec" id="dt-to-round">Levar preços reais para o passo 4</button></div>
+    <div class="tbl"><table id="dt-tbl"></table></div>
+  </div>
+  <div class="card">
+    <h3>Colar em bloco</h3>
+    <p class="note">Uma linha por mês: <span class="mono">região; mês; sem; fds; conc sem; conc fds; lucro; share; util sem; util fds; diárias</span>. Colunas finais podem ficar vazias.</p>
+    <textarea id="dt-io"></textarea>
+    <div class="row"><button class="b" id="dt-paste">Importar linhas</button><button class="b sec" id="dt-export">Exportar linhas</button></div>
+  </div>
+</div>
+<div class="grid two" style="margin-top:12px"><div class="card"><div class="chart" id="ch-chk-profit"></div></div><div class="card"><div class="chart" id="ch-chk-share"></div></div></div>
+<div class="tbl"><table id="chk-tbl"></table></div>
+<h2>Variáveis extraídas do modelo (cenário A, Tampa)</h2>
+<div class="tbl"><table id="vars-tbl"></table></div>
+</section>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/*MODEL-START*/
+const MONTHS = ["Jul","Ago","Set","Out","Nov","Dez","Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez","Jan","Fev","Mar","Abr","Mai","Jun"];
+const PRESETS = {
+  normal: { b:[100,100,100,100,100,100,98,95,92,87,81,74,65,49,32,23,16,10,5,2,0], t:[100,99,97,94,90,85,79,72,65,58,50,42,35,28,21,15,10,6,3,1,0] },
+  flat:   { b:[100,100,100,100,100,100,97,92,87,81,74,66,57,48,38,29,21,14,8,3,0], t:[100,97,94,90,86,81,76,70,64,57,50,43,36,30,24,19,14,10,6,3,0] },
+  steep:  { b:[100,100,100,100,100,100,99,98,97,95,92,88,78,50,21,11,7,4,2,1,0], t:[100,99,98,96,94,91,88,84,76,67,50,33,24,16,12,9,6,4,2,1,0] }
+};
+const DEFAULTS = {
+  BDC: PRESETS.normal.b.slice(), LDC: PRESETS.normal.t.slice(), offset: 0,
+  base: 1000, wd: { bwd:1, bwe:0.1, twd:0.5, twe:1 }, growth: 0,
+  sens: { business:1, tourist:4 }, attr: { u:0.9, c:1.1 }, shared: 6, unshared: 2, k: 1/3,
+  capLim: 4291.145161237114,
+  uvcU: 13, uvcC: 11, invU: 306.1577, invC: 342.2514, othU: 860204.7, othC: 1145329, othMode: "fixo",
+  daysWd: 5, daysWe: 2, weeks: 4.35, seasonOn: false,
+  seasB: [null,0.94,0.97,0.98,1.08,1.00,0.81,1.06,1.05,1.04,0.99,1.03,0.97,0.94,0.97,0.98],
+  seasT: [null,0.99,0.99,0.88,0.96,1.02,1.03,1.01,1.05,1.09,0.98,1.00,0.96,0.99,0.99,0.88]
+};
+const CAP_TAMPA = 4086.804915463918, CAPC_TAMPA = 4259.12451958763;
+function defaultRegions(){ return [
+  { id: "tampa",   nome: "Tampa",   mult: 1, capU: CAP_TAMPA,   capC: CAPC_TAMPA,   prevU: [49,41], prevC: [45,29], c0: [44,28], comp: "manual", ativa: true,  fonte: "extraído do modelo" },
+  { id: "orlando", nome: "Orlando", mult: 4, capU: CAP_TAMPA*4, capC: CAPC_TAMPA*4, prevU: [45,37], prevC: [44,37], c0: [31,31], comp: "manual", ativa: false, fonte: "demanda 4x e preços do dump; frota é premissa" },
+  { id: "miami",   nome: "Miami",   mult: 2, capU: CAP_TAMPA*2, capC: CAPC_TAMPA*2, prevU: [45,36], prevC: [45,33], c0: [33,33], comp: "manual", ativa: false, fonte: "preços do dump; demanda 2x e frota são premissas" }
+]; }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function curveVal(tbl, price, offset){ let idx = (price + (offset||0)) / 5; idx = Math.max(0, Math.min(20, idx)); const i = Math.floor(idx); if (i >= 20) return 0; return (tbl[i] + (tbl[i+1]-tbl[i])*(idx-i)) / 100; }
+function seasonFactor(P, seg, step){ if (!P.seasonOn) return 1; const arr = seg === "business" ? P.seasB : P.seasT; const v = arr[(step % 12) + 1]; return (v === null || v === undefined || isNaN(v)) ? 1 : v; }
+function cellOrders(P, seg, t, pu, pc, step, mult){
+  const tbl = seg === "business" ? P.BDC : P.LDC; const cu = curveVal(tbl, pu, P.offset), cc = curveVal(tbl, pc, P.offset); const m = Math.min(cu, cc), M = Math.max(cu, cc);
+  const wkey = (seg === "business" ? "b" : "t") + (t === "weekday" ? "wd" : "we"); const growth = P.growth ? Math.pow(1+P.growth, Math.max(0, step-3)) : 1;
+  const b = P.base * P.wd[wkey] * (mult || 1) * seasonFactor(P, seg, step) * growth; const shared = P.shared * b * m, unshared = P.unshared * b * (M - m);
+  let est = 0.5 + P.sens[seg] * (pc - pu) / (2 * (pu + pc)); est = Math.max(0, Math.min(1, est)); const fu = (1 - P.k) * 0.5 + P.k * est;
+  return { u: P.attr.u * (shared * fu + (pu < pc ? unshared : 0)), c: P.attr.c * (shared * (1 - fu) + (pc < pu ? unshared : 0)), cu, cc, est, fu };
+}
+function monthCalc(P, puWd, puWe, pcWd, pcWe, reg, opts){
+  opts = opts || {}; reg = reg || { mult: 1, capU: CAP_TAMPA, capC: CAPC_TAMPA }; const step = opts.step === undefined ? 5 : opts.step;
+  const mult = reg.mult || 1; const cap = { u: opts.capU || reg.capU, c: opts.capC || reg.capC };
+  const price = { u: { weekday: puWd, weekend: puWe }, c: { weekday: pcWd, weekend: pcWe } }; const days = { weekday: P.daysWd, weekend: P.daysWe };
+  const out = { u: mk(), c: mk(), cells: [] }; function mk(){ return { units:0, rev:0, contrib:0, util:{}, daily:{}, lost:{}, sales:{}, revT:{} }; }
+  for (const t of ["weekday","weekend"]) { const od = { u:{}, c:{} };
+    for (const seg of ["business","tourist"]) { const r = cellOrders(P, seg, t, price.u[t], price.c[t], step, mult); od.u[seg] = r.u; od.c[seg] = r.c; out.cells.push({ seg, t, ou: r.u, oc: r.c, shareU: r.u / (r.u + r.c), cu: r.cu, cc: r.cc }); }
+    for (const f of ["u","c"]) { const tot = od[f].business + od[f].tourist; const fill = tot > 0 ? Math.min(1, cap[f] / tot) : 1;
+      out[f].util[t] = Math.min(1, tot / cap[f]); out[f].daily[t] = tot * fill; out[f].lost[t] = tot * (1 - fill) * days[t] * P.weeks;
+      const s = tot * fill * days[t] * P.weeks; const uvc = f === "u" ? P.uvcU : P.uvcC; out[f].sales[t] = s; out[f].revT[t] = s * price[f][t]; out[f].units += s; out[f].rev += s * price[f][t]; out[f].contrib += s * (price[f][t] - uvc); } }
+  out.u.inv = P.invU * cap.u; out.c.inv = P.invC * cap.c; out.u.oth = P.othMode === "carro" ? (P.othU / CAP_TAMPA) * cap.u : P.othU * mult; out.c.oth = P.othC * mult;
+  for (const f of ["u","c"]) { out[f].vc = out[f].rev - out[f].contrib; out[f].profit = out[f].contrib - out[f].inv - out[f].oth; out[f].utilAvg = (out[f].util.weekday * P.daysWd + out[f].util.weekend * P.daysWe) / (P.daysWd + P.daysWe); out[f].cap = cap[f]; }
+  out.share = out.u.units / (out.u.units + out.c.units); return out;
+}
+function bestResponse(P, pcWd, pcWe, reg, opts, lo, hi, loE, hiE){ let best = null; for (let pw = lo; pw <= hi; pw++) for (let pe = loE; pe <= hiE; pe++) { const v = monthCalc(P, pw, pe, pcWd, pcWe, reg, opts).u.profit; if (best === null || v > best.profit) best = { pw, pe, profit: v }; } return best; }
+function compNext(kind, lastU, lastC, prevRes){
+  const uw = prevRes ? prevRes.c.util.weekday : 0.9, ue = prevRes ? prevRes.c.util.weekend : 0.75; let pw = lastC[0], pe = lastC[1];
+  if (kind === "parado" || kind === "manual") {} else if (kind === "tft") { pw = lastU[0]; pe = lastU[1]; } else if (kind === "pred") { pw = Math.min(lastC[0]-1, lastU[0]); pe = Math.min(lastC[1]-1, lastU[1]); }
+  else if (kind === "cap") { pw = lastC[0] - (uw < 0.85 ? 2 : uw < 0.90 ? 1 : 0) + (uw >= 0.92 ? 1 : 0); pe = lastC[1] - (ue < 0.60 ? 2 : ue < 0.70 ? 1 : 0) + (ue >= 0.90 ? 1 : 0); }
+  else if (kind === "grad") { pw = lastC[0] + (uw >= 0.80 ? 1 : -1); pe = lastC[1] + (ue >= 0.65 ? 1 : -1); }
+  return [Math.max(15, Math.min(100, pw)), Math.max(10, Math.min(100, pe))];
+}
+function runRound(P, cfg){
+  const histU = [cfg.prevU.slice()], histC = [cfg.prevC.slice()];
+  let prevRes = monthCalc(P, cfg.prevU[0], cfg.prevU[1], cfg.prevC[0], cfg.prevC[1], cfg.reg, { step: cfg.startStep - 1, capU: cfg.months[0].capU });
+  const rows = []; let cum = 0, units = 0, utils = [];
+  cfg.months.forEach((m, k) => {
+    let pc = m.pc; if (!pc) pc = (k === 0 && cfg.c0) ? cfg.c0.slice() : compNext(cfg.comp, histU[histU.length-1], histC[histC.length-1], prevRes);
+    let pu = m.pu; if (!pu) pu = cfg.policy(k, histU, histC, prevRes, pc, m);
+    const r = monthCalc(P, pu[0], pu[1], pc[0], pc[1], cfg.reg, { step: m.step, capU: m.capU });
+    cum += r.u.profit; units += r.u.units; utils.push(r.u.utilAvg); rows.push({ step: m.step, pu, pc, capU: m.capU, r }); histU.push(pu); histC.push(pc); prevRes = r;
+  });
+  const last = rows[rows.length-1].r; return { rows, cum, units, utilAvg: utils.reduce((a,b)=>a+b,0)/utils.length, shareFinal: last.share, lastProfit: last.u.profit };
+}
+const OBSERVED = [
+  { reg:"Tampa", step:0, puw:49, pue:41, pcw:48, pce:34, sales:78200, profit:582591, uwd:0.709, uwe:0.426, share:0.429, fonte:"histórico" },
+  { reg:"Tampa", step:1, puw:49, pue:41, pcw:46, pce:30, sales:76158, profit:519218, uwd:0.701, uwe:0.390, share:0.410, fonte:"histórico" },
+  { reg:"Tampa", step:2, puw:49, pue:41, pcw:45, pce:29, sales:75419, profit:495349, uwd:0.696, uwe:0.381, share:0.403, fonte:"histórico" },
+  { reg:"Tampa", step:4, puw:43, pue:32, pcw:44, pce:28, sales:88782, profit:348195, uwd:0.790, uwe:0.521, share:0.443, fonte:"grupo, 13/10" },
+  { reg:"Tampa", step:4, puw:51, pue:39, pcw:44, pce:28, sales:72651, profit:478470, uwd:0.657, uwe:0.400, share:0.391, fonte:"jogada 17/10" },
+  { reg:"Tampa", step:10, puw:40, pue:28, pcw:44, pce:28, sales:null, profit:200362, uwd:0.83, uwe:0.60, share:0.468, fonte:"jogada 17/10 (teste)" },
+  { reg:"Tampa", step:11, puw:51, pue:39, pcw:43, pce:28, sales:null, profit:463483, uwd:0.65, uwe:0.40, share:0.387, fonte:"jogada 17/10" },
+  { reg:"Tampa", step:12, puw:60, pue:48, pcw:44, pce:28, sales:null, profit:328710, uwd:0.50, uwe:0.28, share:0.332, fonte:"jogada 17/10 (teste)" }
+];
+/*MODEL-END*/
+
+// ======================= gráficos SVG =======================
+const S = { u: "var(--s1)", c: "var(--s2)", b: "var(--s3)", t: "var(--s4)", r: ["var(--s1)","var(--s3)","var(--s4)","var(--s2)"] };
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
+function niceTicks(min, max, n){ if (max === min) max = min + 1; const raw = (max - min) / n, pow = Math.pow(10, Math.floor(Math.log10(raw))); const cand = [1,2,2.5,5,10].map(c => c*pow); const step = cand.find(c => c >= raw) || cand[cand.length-1]; const lo = Math.floor(min/step)*step, hi = Math.ceil(max/step)*step; const t = []; for (let v = lo; v <= hi + step/2; v += step) t.push(+v.toFixed(6)); return t; }
+function legendHtml(series, dot){ return series.length > 1 ? `<div class="legend">${series.map(s => `<span><i class="${dot ? "dot" : ""}" style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>` : ""; }
+function lineChart(el, series, opt){
+  opt = opt || {}; const W = 600, H = opt.height || 210, ml = 50, mr = 14, mt = 12, mb = 28; const iw = W-ml-mr, ih = H-mt-mb;
+  const xs = series.flatMap(s => s.data.map(d => d.x)), ys = series.flatMap(s => s.data.map(d => d.y)); if (!xs.length) { el.innerHTML = ""; return; }
+  const xmin = Math.min(...xs), xmax = Math.max(...xs); let ymin = opt.yMin !== undefined ? opt.yMin : Math.min(...ys), ymax = Math.max(...ys);
+  const yt = niceTicks(ymin, ymax, 4); ymin = Math.min(ymin, yt[0]); ymax = Math.max(ymax, yt[yt.length-1]);
+  const X = x => ml + (xmax === xmin ? iw/2 : (x - xmin) / (xmax - xmin) * iw), Y = y => mt + ih - (y - ymin) / (ymax - ymin) * ih; const yFmt = opt.yFmt || (v => v), xFmt = opt.xFmt || (v => v);
+  let g = `<g class="grid">${yt.map(v => `<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}"></line>`).join("")}</g>` + yt.map(v => `<text x="${ml-6}" y="${Y(v)+3.5}" text-anchor="end">${esc(yFmt(v))}</text>`).join("");
+  const xt = opt.xTicks || niceTicks(xmin, xmax, 6).filter(v => v >= xmin && v <= xmax);
+  g += `<line class="axis" x1="${ml}" x2="${W-mr}" y1="${mt+ih}" y2="${mt+ih}"></line>` + xt.map(v => `<text x="${X(typeof v === "object" ? v.x : v)}" y="${H-8}" text-anchor="middle">${esc(typeof v === "object" ? v.label : xFmt(v))}</text>`).join("");
+  (opt.refX || []).forEach(r => { g += `<line x1="${X(r.x)}" x2="${X(r.x)}" y1="${mt}" y2="${mt+ih}" stroke="${r.color || "var(--line)"}" stroke-width="1"></line><text x="${X(r.x)+3}" y="${mt+10}">${esc(r.label)}</text>`; });
+  series.forEach(s => { if (!s.data.length) return; const pts = s.data.map(d => `${X(d.x).toFixed(1)},${Y(d.y).toFixed(1)}`).join(" ");
+    if (opt.area) g += `<polygon points="${X(s.data[0].x).toFixed(1)},${Y(Math.max(ymin,0))} ${pts} ${X(s.data[s.data.length-1].x).toFixed(1)},${Y(Math.max(ymin,0))}" fill="${s.color}" fill-opacity="0.1"></polygon>`;
+    g += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>`;
+    if (s.data.length <= 24) s.data.forEach(d => { g += `<circle cx="${X(d.x)}" cy="${Y(d.y)}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2"><title>${esc(s.name)} · ${esc(xFmt(d.x))}: ${esc(yFmt(d.y))}</title></circle>`; });
+    else s.data.forEach((d, i) => { const x0 = i ? (X(s.data[i-1].x)+X(d.x))/2 : ml, x1 = i < s.data.length-1 ? (X(s.data[i+1].x)+X(d.x))/2 : W-mr; g += `<rect class="hit" x="${x0}" y="${mt}" width="${Math.max(1,x1-x0)}" height="${ih}"><title>${esc(s.name)} · ${esc(xFmt(d.x))}: ${esc(yFmt(d.y))}</title></rect>`; });
+    const last = s.data[s.data.length-1]; if (opt.endLabel) g += `<text class="v" x="${X(last.x)-4}" y="${Y(last.y)-7}" text-anchor="end">${esc(yFmt(last.y))}</text>`; });
+  (opt.marks || []).forEach(m => { g += `<circle cx="${X(m.x)}" cy="${Y(m.y)}" r="5.5" fill="${m.color}" stroke="var(--surface)" stroke-width="2"><title>${esc(m.label)}</title></circle><text class="v" x="${X(m.x)}" y="${Y(m.y)-10}" text-anchor="middle">${esc(m.label)}</text>`; });
+  el.innerHTML = `${opt.title ? `<p class="title">${esc(opt.title)}</p>` : ""}${opt.sub ? `<p class="sub">${esc(opt.sub)}</p>` : ""}${legendHtml(series)}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.title||"")}">${g}</svg>`;
+}
+function colChart(el, cats, series, opt){
+  opt = opt || {}; const W = 600, H = opt.height || 210, ml = 50, mr = 14, mt = 12, mb = 28, iw = W-ml-mr, ih = H-mt-mb;
+  const vals = series.flatMap(s => s.values); let ymin = Math.min(0, ...vals), ymax = Math.max(0, ...vals); const yt = niceTicks(ymin, ymax, 4); ymin = Math.min(ymin, yt[0]); ymax = Math.max(ymax, yt[yt.length-1]);
+  const Y = y => mt + ih - (y - ymin) / (ymax - ymin) * ih; const yFmt = opt.yFmt || (v => v); const band = iw / cats.length, bw = Math.min(24, (band - 8) / series.length - 2);
+  let g = `<g class="grid">${yt.map(v => `<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}"></line>`).join("")}</g>` + yt.map(v => `<text x="${ml-6}" y="${Y(v)+3.5}" text-anchor="end">${esc(yFmt(v))}</text>`).join("");
+  cats.forEach((c, i) => { const cx = ml + band*i + band/2; g += `<text x="${cx}" y="${H-8}" text-anchor="middle">${esc(c)}</text>`;
+    series.forEach((s, j) => { const v = s.values[i]; const x = cx - (series.length*(bw+2))/2 + j*(bw+2); const y0 = Y(0), y1 = Y(v); g += `<rect x="${x}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.max(Math.abs(y1-y0),0.5)}" fill="${s.color}"><title>${esc(s.name)} · ${esc(c)}: ${esc(yFmt(v))}</title></rect>`; }); });
+  g += `<line class="axis" x1="${ml}" x2="${W-mr}" y1="${Y(0)}" y2="${Y(0)}"></line>`;
+  el.innerHTML = `${opt.title ? `<p class="title">${esc(opt.title)}</p>` : ""}${opt.sub ? `<p class="sub">${esc(opt.sub)}</p>` : ""}${legendHtml(series)}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.title||"")}">${g}</svg>`;
+}
+function hbarChart(el, rows, opt){
+  opt = opt || {}; const W = 600, rh = 26, ml = opt.ml || 150, mr = 60, mt = 8, H = mt + rows.length*rh + 10, iw = W-ml-mr;
+  const vmax = opt.max || Math.max(...rows.map(r => Math.max(r.value, r.mark === undefined ? -Infinity : r.mark)), 0) * 1.05; const vmin = Math.min(0, ...rows.map(r => r.value)); const X = v => ml + (v - vmin) / (vmax - vmin) * iw; const fmt = opt.fmt || (v => v); let g = "";
+  rows.forEach((r, i) => { const y = mt + i*rh + 4; const x0 = X(0), x1 = X(r.value); g += `<text x="${ml-8}" y="${y+13}" text-anchor="end">${esc(r.label)}</text><rect x="${Math.min(x0,x1)}" y="${y}" width="${Math.max(Math.abs(x1-x0),0.5)}" height="18" fill="${r.color}"><title>${esc(r.label)}: ${esc(fmt(r.value))}</title></rect><text class="v" x="${Math.max(x0,x1)+6}" y="${y+13}">${esc(fmt(r.value))}</text>`;
+    if (r.mark !== undefined) g += `<circle cx="${X(r.mark)}" cy="${y+9}" r="5" fill="${opt.markColor || S.c}" stroke="var(--surface)" stroke-width="2"><title>${esc(opt.markName || "")} · ${esc(r.label)}: ${esc(fmt(r.mark))}</title></circle>`; });
+  if (opt.ref) g += `<line x1="${X(opt.ref.value)}" x2="${X(opt.ref.value)}" y1="${mt}" y2="${H-6}" stroke="var(--fg)" stroke-width="1"></line><text x="${X(opt.ref.value)+3}" y="${H-2}">${esc(opt.ref.label)}</text>`;
+  const leg = opt.markName ? `<div class="legend"><span><i style="background:${rows[0] ? rows[0].color : S.u}"></i>${esc(opt.barName || "")}</span><span><i class="dot" style="background:${opt.markColor || S.c}"></i>${esc(opt.markName)}</span></div>` : (opt.legend || "");
+  el.innerHTML = `${opt.title ? `<p class="title">${esc(opt.title)}</p>` : ""}${opt.sub ? `<p class="sub">${esc(opt.sub)}</p>` : ""}${leg}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.title||"")}">${g}</svg>`;
+}
+
+// ======================= estado =======================
+let P = clone(DEFAULTS);
+let REG = defaultRegions();
+let R = { mode: "treino", startStep: 4, n: 11, cur: 0, months: [] };   // months[k] = { step, done, per: { regId: { pu, pc, capU, obsProfit, obsShare } } }
+let DATA = clone(OBSERVED);
+const $ = id => document.getElementById(id);
+const fmt0 = n => Math.round(n).toLocaleString("pt-BR");
+const fmtK = n => (Math.abs(n) >= 1e6 ? (n/1e6).toLocaleString("pt-BR",{maximumFractionDigits:2}) + " M" : fmt0(n/1000) + " mil");
+const fmtKs = n => (Math.abs(n) >= 1e6 ? (n/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "M" : Math.round(n/1000) + "k");
+const pct = n => (n*100).toFixed(1).replace(".", ",") + "%";
+const pct0 = n => Math.round(n*100) + "%";
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 1800); }
+function copyText(text){ try { navigator.clipboard.writeText(text).then(()=>toast("Copiado"), ()=>fallback()); } catch(e){ fallback(); } function fallback(){ const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); toast("Copiado"); } catch(e){ toast("Selecione e copie manualmente"); } document.body.removeChild(ta); } }
+function activeRegs(){ return REG.filter(r => r.ativa !== false); }
+function regById(id){ return REG.find(r => r.id === id) || REG[0]; }
+function stepLabel(step){ return MONTHS[step] !== undefined ? MONTHS[step] : "m" + step; }
+function kpi(k, v, cls, delta){ return `<div class="kpi ${cls||""}"><div class="k">${k}</div><div class="v">${v}</div>${delta ? `<div class="d ${delta.cls||""}">${delta.text}</div>` : ""}</div>`; }
+function brRange(){ return [+$("r-br-wd-lo").value, +$("r-br-wd-hi").value, +$("r-br-we-lo").value, +$("r-br-we-hi").value]; }
+function fleetEditable(){ return R.mode === "r2"; }
+
+// ---- navegação
+function go(tab){
+  document.querySelectorAll(".steps button").forEach(x => x.setAttribute("aria-selected", x.dataset.tab === tab ? "true" : "false"));
+  document.querySelectorAll(".panel").forEach(p => p.hidden = p.id !== "panel-" + tab);
+  try { localStorage.setItem("urc-tab", tab); } catch(e){}
+  const f = { s1: renderS1, s2: renderRegions, s3: renderParamCharts, s4: renderS4, s5: renderResults, month: renderMonth, compare: fillRegSelects, check: () => { renderData(); renderCheck(); } }[tab]; if (f) f();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll(".steps button").forEach(b => b.addEventListener("click", () => go(b.dataset.tab)));
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
+
+// ---- passo 1
+const MODE_DEF = { treino: { start: 4, n: 11 }, r1: { start: 3, n: 12 }, r2: { start: 3, n: 12 } };
+function renderS1(){ document.querySelectorAll("#round-choice label").forEach(l => { const inp = l.querySelector("input"); inp.checked = inp.value === R.mode; l.classList.toggle("on", inp.checked); }); $("r-start").value = R.startStep; $("r-n").value = R.n; renderScenarioList(); }
+$("round-choice").addEventListener("change", e => { R.mode = e.target.value; R.startStep = MODE_DEF[R.mode].start; R.n = MODE_DEF[R.mode].n; buildRound(); renderS1(); toast(R.mode === "r2" ? "Rodada 2: frota editável por trimestre" : "Frota fixa nesta rodada"); });
+$("r-start").addEventListener("change", () => { R.startStep = +$("r-start").value; buildRound(); });
+$("r-n").addEventListener("change", () => { R.n = Math.max(1, +$("r-n").value); buildRound(); });
+function fillMonthSelect(sel, def){ sel.innerHTML = MONTHS.slice(0, 15).map((m, s) => `<option value="${s}">${m} (passo ${s})</option>`).join(""); sel.value = def; }
+fillMonthSelect($("r-start"), 4); fillMonthSelect($("m-step"), 5); fillMonthSelect($("cmp-start"), 5);
+
+// ---- cenários
+function snapshot(){ formToParams(); return { params: P, regions: REG, round: R, data: DATA, versao: 4 }; }
+function restore(s){ P = Object.assign(clone(DEFAULTS), s.params || {}); REG = s.regions && s.regions.length ? s.regions : defaultRegions(); R = s.round && s.round.months ? s.round : { mode: "treino", startStep: 4, n: 11, cur: 0, months: [] }; DATA = s.data || clone(OBSERVED); paramsToForm(); renderRegions(); fillRegSelects(); if (!R.months.length) buildRound(); renderS1(); }
+function scenarioStore(){ try { return JSON.parse(localStorage.getItem("urc-scenarios") || "{}"); } catch(e){ return {}; } }
+function scenarioSave(all){ try { localStorage.setItem("urc-scenarios", JSON.stringify(all)); return true; } catch(e){ return false; } }
+function renderScenarioList(){ const all = scenarioStore(); const sel = $("sc-list"); const names = Object.keys(all); sel.innerHTML = names.length ? names.map(n => `<option>${esc(n)}</option>`).join("") : "<option value=''>(nenhum guardado)</option>"; }
+$("sc-save").addEventListener("click", () => { const name = $("sc-name").value.trim(); if (!name) { toast("Dê um nome ao cenário"); return; } const all = scenarioStore(); all[name] = snapshot(); if (scenarioSave(all)) { renderScenarioList(); $("sc-list").value = name; toast("Cenário guardado: " + name); } else toast("Este navegador não permite guardar; use Exportar"); });
+$("sc-load").addEventListener("click", () => { const s = scenarioStore()[$("sc-list").value]; if (s) { restore(s); toast("Cenário carregado"); } });
+$("sc-del").addEventListener("click", () => { const all = scenarioStore(); delete all[$("sc-list").value]; scenarioSave(all); renderScenarioList(); toast("Excluído"); });
+$("sc-export").addEventListener("click", () => { $("sc-io").value = JSON.stringify(snapshot(), null, 1); copyText($("sc-io").value); });
+$("sc-import").addEventListener("click", () => { try { restore(JSON.parse($("sc-io").value)); toast("Cenário importado"); } catch(e){ toast("JSON inválido"); } });
+$("sc-reset").addEventListener("click", () => { restore({ params: clone(DEFAULTS), regions: defaultRegions(), round: null, data: clone(OBSERVED) }); toast("Padrão restaurado"); });
+
+// ---- passo 2: regiões (um campo por item)
+function renderRegions(){
+  const list = $("reg-list"); list.innerHTML = "";
+  REG.forEach((r, i) => {
+    const d = document.createElement("div"); d.className = "card regbox" + (r.ativa === false ? " off" : ""); d.style.borderLeftColor = S.r[i % S.r.length];
+    d.innerHTML = `<h3>${esc(r.nome)} <span class="pill ${r.ativa === false ? "w" : "g"}">${r.ativa === false ? "fora do jogo" : "em jogo"}</span></h3>
+      <p class="note">${esc(r.fonte || "")}</p>
+      <label class="f"><span>Em jogo nesta rodada?</span><select data-i="${i}" data-f="ativa" id="reg-ativa-${i}"><option value="1" ${r.ativa!==false?"selected":""}>sim</option><option value="0" ${r.ativa===false?"selected":""}>não</option></select></label>
+      <label class="f"><span>Nome</span><input type="text" value="${esc(r.nome)}" data-i="${i}" data-f="nome" id="reg-nome-${i}"></label>
+      <label class="f"><span>Demanda relativa a Tampa</span><input type="number" step="0.1" value="${r.mult}" data-i="${i}" data-f="mult" id="reg-mult-${i}"></label>
+      <label class="f"><span>Frota Universal (carros)</span><input type="number" step="10" value="${Math.round(r.capU)}" data-i="${i}" data-f="capU" id="reg-capu-${i}"></label>
+      <label class="f"><span>Frota do concorrente (carros)</span><input type="number" step="10" value="${Math.round(r.capC)}" data-i="${i}" data-f="capC" id="reg-capc-${i}"></label>
+      <label class="f"><span>Nosso preço no mês anterior · semana</span><input type="number" value="${r.prevU[0]}" data-i="${i}" data-f="prevU0" id="reg-pu0-${i}"></label>
+      <label class="f"><span>Nosso preço no mês anterior · fim de semana</span><input type="number" value="${r.prevU[1]}" data-i="${i}" data-f="prevU1" id="reg-pu1-${i}"></label>
+      <label class="f"><span>Preço do concorrente no mês anterior · semana</span><input type="number" value="${r.prevC[0]}" data-i="${i}" data-f="prevC0" id="reg-pc0-${i}"></label>
+      <label class="f"><span>Preço do concorrente no mês anterior · fim de semana</span><input type="number" value="${r.prevC[1]}" data-i="${i}" data-f="prevC1" id="reg-pc1-${i}"></label>
+      <label class="f"><span>Preço do concorrente no 1º mês da rodada · semana<span class="hint">já fixado quando decidimos</span></span><input type="number" value="${r.c0[0]}" data-i="${i}" data-f="c00" id="reg-c00-${i}"></label>
+      <label class="f"><span>Preço do concorrente no 1º mês · fim de semana</span><input type="number" value="${r.c0[1]}" data-i="${i}" data-f="c01" id="reg-c01-${i}"></label>
+      <label class="f"><span>Comportamento do concorrente</span><select data-i="${i}" data-f="comp" id="reg-comp-${i}">
+        <option value="manual" ${r.comp==="manual"?"selected":""}>manual (digito o preço real)</option><option value="cap" ${r.comp==="cap"?"selected":""}>administra capacidade (observado)</option><option value="parado" ${r.comp==="parado"?"selected":""}>parado</option>
+        <option value="tft" ${r.comp==="tft"?"selected":""}>tit for tat</option><option value="pred" ${r.comp==="pred"?"selected":""}>predatório</option><option value="grad" ${r.comp==="grad"?"selected":""}>sobe gradual (premissa)</option></select></label>
+      <div class="row"><button class="b sec sm" data-del="${i}">Remover região</button></div>`;
+    list.appendChild(d);
+  });
+  const tot = activeRegs().reduce((a, r) => a + r.capU, 0);
+  $("reg-total").innerHTML = `Frota total da Universal em jogo: <b>${fmt0(tot)}</b> carros · regiões em jogo: ${activeRegs().map(r => r.nome).join(", ")}`;
+}
+$("reg-list").addEventListener("change", e => { const el = e.target; if (el.dataset.i === undefined) return; const r = REG[+el.dataset.i], f = el.dataset.f; const v = el.value;
+  if (f === "ativa") r.ativa = v === "1"; else if (f === "nome") { r.nome = v; r.id = v.toLowerCase().replace(/\s+/g, "-"); } else if (f === "comp") r.comp = v;
+  else if (f.startsWith("prevU")) r.prevU[+f.slice(-1)] = +v; else if (f.startsWith("prevC")) r.prevC[+f.slice(-1)] = +v; else if (f.startsWith("c0")) r.c0[+f.slice(-1)] = +v; else r[f] = +v;
+  renderRegions(); fillRegSelects(); buildRound(); });
+$("reg-list").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (!b) return; if (REG.length === 1) { toast("Mantenha pelo menos uma região"); return; } REG.splice(+b.dataset.del, 1); renderRegions(); fillRegSelects(); buildRound(); });
+$("reg-add").addEventListener("click", () => { const n = REG.length + 1; REG.push({ id: "regiao" + n, nome: "Região " + n, mult: 1, capU: CAP_TAMPA, capC: CAPC_TAMPA, prevU: [49,41], prevC: [45,29], c0: [44,28], comp: "manual", ativa: true, fonte: "nova região: preencha com o que a tela mostrar" }); renderRegions(); fillRegSelects(); buildRound(); });
+function fillRegSelects(){ ["m-reg","cmp-reg"].forEach(id => { const sel = $(id); const cur = sel.value; sel.innerHTML = activeRegs().map(r => `<option value="${r.id}">${esc(r.nome)}</option>`).join(""); if ([...sel.options].some(o => o.value === cur)) sel.value = cur; }); }
+
+// ---- passo 3: parâmetros
+const FIELDS = [["p-base","base"],["p-wd-bwd","wd.bwd"],["p-wd-bwe","wd.bwe"],["p-wd-twd","wd.twd"],["p-wd-twe","wd.twe"],["p-growth","growth"],["p-sens-b","sens.business"],["p-sens-t","sens.tourist"],["p-attr-u","attr.u"],["p-attr-c","attr.c"],["p-shared","shared"],["p-unshared","unshared"],["p-k","k"],["p-cap-lim","capLim"],["p-uvc-u","uvcU"],["p-inv-u","invU"],["p-oth-u","othU"],["p-uvc-c","uvcC"],["p-inv-c","invC"],["p-oth-c","othC"],["p-days-wd","daysWd"],["p-days-we","daysWe"],["p-weeks","weeks"],["p-offset","offset"]];
+function getPath(o, path){ return path.split(".").reduce((a,k)=>a[k], o); }
+function setPath(o, path, v){ const ks = path.split("."); const last = ks.pop(); ks.reduce((a,k)=>a[k], o)[last] = v; }
+function paramsToForm(){ FIELDS.forEach(([id, path]) => { const v = getPath(P, path); $(id).value = (typeof v === "number" && !Number.isInteger(v)) ? +v.toFixed(4) : v; }); $("p-oth-mode").value = P.othMode; $("p-season").value = P.seasonOn ? "1" : "0"; renderCurves(); renderSeason(); renderParamCharts(); }
+function formToParams(){ FIELDS.forEach(([id, path]) => { const v = parseFloat($(id).value); if (!isNaN(v)) setPath(P, path, v); }); P.othMode = $("p-oth-mode").value; P.seasonOn = $("p-season").value === "1";
+  document.querySelectorAll("#curve-b input").forEach((el, i) => { const v = parseFloat(el.value); if (!isNaN(v)) P.BDC[i] = v; }); document.querySelectorAll("#curve-t input").forEach((el, i) => { const v = parseFloat(el.value); if (!isNaN(v)) P.LDC[i] = v; });
+  document.querySelectorAll("#season-tbl input").forEach(el => { const v = parseFloat(el.value); const arr = el.dataset.seg === "b" ? P.seasB : P.seasT; if (!isNaN(v)) arr[+el.dataset.i] = v; }); }
+function renderCurves(){ for (const [id, tbl] of [["curve-b", P.BDC], ["curve-t", P.LDC]]) { const box = $(id); box.innerHTML = ""; tbl.forEach((v, i) => { const d = document.createElement("div"); d.innerHTML = `<label>$${i*5}<input type="number" step="1" value="${v}" id="${id}-${i}"></label>`; box.appendChild(d); }); } }
+function renderSeason(){ const t = $("season-tbl"); let h = "<tr><th class='l'>Mês</th>" + MONTHS.slice(0,12).map(m=>`<th>${m}</th>`).join("") + "</tr>"; for (const [seg, arr, lab] of [["b", P.seasB, "Business"], ["t", P.seasT, "Turista"]]) { h += `<tr><td class='l'>${lab}</td>` + MONTHS.slice(0,12).map((m, s) => `<td><input type="number" step="0.01" value="${arr[s+1]}" data-seg="${seg}" data-i="${s+1}" id="seas-${seg}-${s}"></td>`).join("") + "</tr>"; } t.innerHTML = h; }
+function renderParamCharts(){ const pts = tbl => Array.from({length: 21}, (_, i) => ({ x: i*5, y: curveVal(tbl, i*5, P.offset) }));
+  lineChart($("ch-curves"), [{ name: "Business", color: S.b, data: pts(P.BDC) }, { name: "Turista", color: S.t, data: pts(P.LDC) }], { title: "Curvas de demanda por segmento", sub: "fração da demanda máxima a cada preço da diária", yFmt: v => pct0(v), xFmt: v => "$" + v, yMin: 0, height: 230, refX: [{ x: 51, label: "51", color: S.u }, { x: 44, label: "44", color: S.c }] });
+  const idx = Array.from({length: 12}, (_, s) => s);
+  lineChart($("ch-season"), [{ name: "Business", color: S.b, data: idx.map(s => ({ x: s, y: P.seasB[s+1] })) }, { name: "Turista", color: S.t, data: idx.map(s => ({ x: s, y: P.seasT[s+1] })) }], { title: "Fatores de sazonalidade por mês", sub: "1,00 = demanda média", xTicks: idx.map(s => ({ x: s, label: MONTHS[s] })), yFmt: v => v.toFixed(2), yMin: 0.7, height: 200 }); }
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => { P.BDC = PRESETS[b.dataset.preset].b.slice(); P.LDC = PRESETS[b.dataset.preset].t.slice(); renderCurves(); renderParamCharts(); toast("Curvas " + b.dataset.preset); }));
+$("panel-s3").addEventListener("change", () => { formToParams(); renderParamCharts(); });
+
+// ---- passo 4: mês a mês
+function buildRound(){
+  const u0 = [+$("r-u0-wd").value, +$("r-u0-we").value];
+  R.months = []; R.cur = 0;
+  for (let k = 0; k < R.n; k++) { const per = {}; activeRegs().forEach(r => { per[r.id] = { pu: u0.slice(), pc: k === 0 ? r.c0.slice() : null, capU: r.capU, obsProfit: null, obsShare: null }; }); R.months.push({ step: R.startStep + k, done: false, per }); }
+  renderS4();
+}
+function ensureRoundRegs(){ activeRegs().forEach(r => R.months.forEach((m, k) => { if (!m.per[r.id]) m.per[r.id] = { pu: [51,39], pc: k === 0 ? r.c0.slice() : null, capU: r.capU, obsProfit: null, obsShare: null }; })); }
+function runAllRegions(policyMode){
+  const out = {}; const [lo, hi, loE, hiE] = brRange();
+  activeRegs().forEach(r => {
+    const cfg = { reg: r, prevU: r.prevU, prevC: r.prevC, startStep: R.startStep, comp: r.comp === "manual" ? "parado" : r.comp,
+      months: R.months.map((m, k) => ({ step: m.step, pu: policyMode === "best" ? null : m.per[r.id].pu, pc: m.per[r.id].pc || null, capU: m.per[r.id].capU })),
+      policy: (k, hu, hc, rp, pc, m) => { const b = bestResponse(P, pc[0], pc[1], r, { step: m.step, capU: m.capU }, lo, hi, loE, hiE); return [b.pw, b.pe]; } };
+    if (r.comp === "manual") cfg.months.forEach((m, k) => { if (!m.pc) m.pc = (k ? cfg.months[k-1].pc : r.c0).slice(); });
+    out[r.id] = runRound(P, cfg);
+  });
+  return out;
+}
+function fleetSuggestion(r, k){
+  // sugestao da rodada 2: escalonada 3.500 -> 3.000 -> 2.800 -> 2.800 em proporcao a Tampa, respeitando a demanda relativa
+  const plan = [3500, 3000, 2800, 2800]; const q = Math.min(3, Math.floor(k / 3)); return Math.round(plan[q] * r.mult);
+}
+function renderS4(){
+  formToParams(); ensureRoundRegs(); if (!R.months.length) return;
+  const k = Math.min(R.cur, R.months.length - 1); const m = R.months[k]; const regs = activeRegs(); const [lo, hi, loE, hiE] = brRange();
+  const quarterStart = fleetEditable() && k % 3 === 0;
+  let h = `<div class="month-head"><span class="m">${stepLabel(m.step)}</span><span class="note">mês ${k+1} de ${R.months.length} · ${{treino:"rodada de treino",r1:"rodada 1, frota fixa",r2:"rodada 2, frota ajustável"}[R.mode]}</span></div><div class="progress"><div style="width:${(k/R.months.length*100).toFixed(0)}%"></div></div>`;
+  h += `<div class="grid">`;
+  regs.forEach((r, ri) => {
+    const per = m.per[r.id]; const prevPc = k ? (R.months[k-1].per[r.id].pc || r.c0) : r.prevC;
+    const pcNow = per.pc || prevPc; const br = bestResponse(P, pcNow[0], pcNow[1], r, { step: m.step, capU: per.capU }, lo, hi, loE, hiE);
+    const res = monthCalc(P, per.pu[0], per.pu[1], pcNow[0], pcNow[1], r, { step: m.step, capU: per.capU });
+    h += `<div class="card regbox" style="border-left-color:${S.r[ri % S.r.length]}"><h3>${esc(r.nome)}</h3>
+      <h3 style="color:var(--ink2)">1 · Preço do concorrente neste mês (tela Price History)</h3>
+      <label class="f"><span>Semana</span><input type="number" value="${pcNow[0]}" data-k="${k}" data-r="${r.id}" data-f="pcw" id="m4-pcw-${ri}"></label>
+      <label class="f"><span>Fim de semana</span><input type="number" value="${pcNow[1]}" data-k="${k}" data-r="${r.id}" data-f="pce" id="m4-pce-${ri}"></label>
+      ${fleetEditable() ? `<h3 style="color:var(--ink2)">2 · Frota deste trimestre</h3><label class="f"><span>Carros da Universal${quarterStart ? "" : " (fixa até o próximo trimestre)"}<span class="hint">sugestão escalonada: ${fmt0(fleetSuggestion(r, k))}</span></span><input type="number" step="10" value="${Math.round(per.capU)}" data-k="${k}" data-r="${r.id}" data-f="cap" id="m4-cap-${ri}" ${quarterStart ? "" : "disabled"}></label>${quarterStart ? `<div class="row"><button class="b sec sm" data-fleet="${r.id}" data-k="${k}">Usar sugestão (${fmt0(fleetSuggestion(r, k))})</button></div>` : ""}` : `<p class="note">Frota fixa em ${fmt0(per.capU)} carros nesta rodada.</p>`}
+      <h3 style="color:var(--ink2)">${fleetEditable() ? "3" : "2"} · Recomendação</h3>
+      <div class="reco"><span class="big">${br.pw} / ${br.pe}</span><div class="note">melhor resposta a ${pcNow[0]}/${pcNow[1]}; lucro previsto ${fmtK(br.profit)}</div><div class="row"><button class="b sm" data-use="${r.id}" data-k="${k}" data-pw="${br.pw}" data-pe="${br.pe}">Usar recomendação</button></div></div>
+      <label class="f"><span>Nosso preço decidido · semana</span><input type="number" value="${per.pu[0]}" data-k="${k}" data-r="${r.id}" data-f="puw" id="m4-puw-${ri}"></label>
+      <label class="f"><span>Nosso preço decidido · fim de semana</span><input type="number" value="${per.pu[1]}" data-k="${k}" data-r="${r.id}" data-f="pue" id="m4-pue-${ri}"></label>
+      <p class="note">Com ${per.pu[0]}/${per.pu[1]}: lucro previsto <b>${fmtK(res.u.profit)}</b>, share ${pct(res.share)}, utilização ${pct0(res.u.util.weekday)} / ${pct0(res.u.util.weekend)}${res.u.lost.weekday + res.u.lost.weekend > 0 ? `, <span class="bad">${fmt0(res.u.lost.weekday + res.u.lost.weekend)} pedidos não atendidos</span>` : ""}.</p>
+      <h3 style="color:var(--ink2)">${fleetEditable() ? "4" : "3"} · Resultado observado na tela (opcional)</h3>
+      <label class="f"><span>Lucro do mês (Net Income)</span><input type="number" value="${per.obsProfit === null ? "" : per.obsProfit}" data-k="${k}" data-r="${r.id}" data-f="obsP" id="m4-obsp-${ri}" placeholder="${Math.round(res.u.profit)}"></label>
+      <label class="f"><span>Share (0,39 ou 39)</span><input type="number" step="0.001" value="${per.obsShare === null ? "" : per.obsShare}" data-k="${k}" data-r="${r.id}" data-f="obsS" id="m4-obss-${ri}" placeholder="${res.share.toFixed(3)}"></label>
+      ${per.obsProfit !== null ? `<p class="note">Previsto ${fmtK(res.u.profit)} · observado ${fmtK(per.obsProfit)} · <span class="${Math.abs(per.obsProfit/res.u.profit-1) < 0.01 ? "ok" : "warn"}">${Math.abs(per.obsProfit/res.u.profit-1) < 0.01 ? "bate" : "difere " + (100*(per.obsProfit/res.u.profit-1)).toFixed(1) + "%"}</span></p>` : ""}
+    </div>`;
+  });
+  // cartão Florida: total das regiões em jogo neste mês, como a linha "Florida" da tela oficial
+  (function(){ let p = 0, pc = 0, u = 0, uc = 0, utl = 0, cap = 0, lost = 0, rev = 0;
+    regs.forEach(r => { const per = m.per[r.id]; const pcNow = per.pc || (k ? (R.months[k-1].per[r.id].pc || r.c0) : r.prevC); const x = monthCalc(P, per.pu[0], per.pu[1], pcNow[0], pcNow[1], r, { step: m.step, capU: per.capU });
+      p += x.u.profit; pc += x.c.profit; u += x.u.units; uc += x.c.units; utl += x.u.daily.weekday * 5 + x.u.daily.weekend * 2; cap += x.u.cap * 7; lost += x.u.lost.weekday + x.u.lost.weekend; rev += x.u.rev; });
+    h += `<div class="card" style="border-left:5px solid var(--red)"><h3>Florida <span class="pill">total das regiões em jogo</span></h3><p class="note">${regs.length === 1 ? "Com só " + esc(regs[0].nome) + " em jogo, Florida repete Tampa, como na tela oficial." : regs.map(r => r.nome).join(" + ")}</p>
+      <div class="kpis" style="grid-template-columns:repeat(2,1fr)">${kpi("Lucro previsto", fmtK(p), "u")}${kpi("Share", pct(u/(u+uc)), "u")}${kpi("Utilização média", pct0(utl/cap), "u")}${kpi("Diárias", fmt0(u), "u")}${kpi("Receita", fmtK(rev), "u")}${kpi("Lucro do concorrente", fmtK(pc), "c")}</div>${lost > 0 ? `<p class="note bad">${fmt0(lost)} pedidos não atendidos</p>` : ""}</div>`; })();
+  h += `</div><div class="nav"><button class="b sec" id="m4-prev" ${k === 0 ? "disabled" : ""}>← Mês anterior</button><button class="b big" id="m4-done">Mês concluído: ir para ${k+1 < R.months.length ? stepLabel(R.months[k+1].step) : "resultados"} →</button></div>`;
+  $("m4-card").innerHTML = h;
+  renderRoundTables();
+}
+$("m4-card").addEventListener("change", e => { const el = e.target; if (!el.dataset.r) return; const per = R.months[+el.dataset.k].per[el.dataset.r]; const f = el.dataset.f; const v = el.value === "" ? null : +el.value;
+  if (f === "pcw") { per.pc = per.pc || [0,0]; per.pc[0] = v; } if (f === "pce") { per.pc = per.pc || [0,0]; per.pc[1] = v; } if (f === "puw") per.pu[0] = v; if (f === "pue") per.pu[1] = v;
+  if (f === "cap") { const k0 = +el.dataset.k; for (let j = k0; j < R.months.length && (j === k0 || j % 3 !== 0); j++) R.months[j].per[el.dataset.r].capU = v; }
+  if (f === "obsP") per.obsProfit = v; if (f === "obsS") per.obsShare = v === null ? null : (v > 1.5 ? v/100 : v);
+  if (per.pc && per.pc[0] === 0) per.pc = null; renderS4(); });
+$("m4-card").addEventListener("click", e => { const u = e.target.closest("[data-use]"); if (u) { const per = R.months[+u.dataset.k].per[u.dataset.use]; per.pu = [+u.dataset.pw, +u.dataset.pe]; renderS4(); return; }
+  const f = e.target.closest("[data-fleet]"); if (f) { const r = regById(f.dataset.fleet); const k0 = +f.dataset.k; const v = fleetSuggestion(r, k0); for (let j = k0; j < R.months.length && (j === k0 || j % 3 !== 0); j++) R.months[j].per[r.id].capU = v; renderS4(); return; }
+  if (e.target.id === "m4-prev") { R.cur = Math.max(0, R.cur - 1); renderS4(); }
+  if (e.target.id === "m4-done") { R.months[R.cur].done = true; if (R.cur + 1 < R.months.length) { R.cur++; const m = R.months[R.cur]; activeRegs().forEach(r => { if (!m.per[r.id].pc) m.per[r.id].pc = (R.months[R.cur-1].per[r.id].pc || r.c0).slice(); }); renderS4(); } else { go("s5"); } } });
+$("btn-r-simulate").addEventListener("click", () => { formToParams(); ensureRoundRegs(); activeRegs().forEach(r => { if (r.comp === "manual") { r.comp = "cap"; } R.months.forEach((m, k) => { if (k > 0) m.per[r.id].pc = null; }); }); const res = runAllRegions("best"); activeRegs().forEach(r => res[r.id].rows.forEach((row, k) => { R.months[k].per[r.id].pu = row.pu; R.months[k].per[r.id].pc = row.pc; })); renderRegions(); renderS4(); toast("Rodada planejada: concorrente 'administra capacidade' e melhor resposta em todos os meses"); });
+$("btn-r-reset").addEventListener("click", () => { buildRound(); toast("Rodada recomeçada"); });
+$("btn-r-copy").addEventListener("click", () => { const rows = [...$("r-tables").querySelectorAll("tr")].map(tr => [...tr.children].map(td => td.textContent.trim()).join("\t")); copyText(rows.join("\n")); });
+function roundResults(){ const res = runAllRegions(null); const regs = activeRegs(); const tot = R.months.map((m, k) => { let p = 0, pc = 0, u = 0, uc = 0, utl = 0, cap = 0, lost = 0; regs.forEach(r => { const x = res[r.id].rows[k].r; p += x.u.profit; pc += x.c.profit; u += x.u.units; uc += x.c.units; utl += x.u.daily.weekday * 5 + x.u.daily.weekend * 2; cap += x.u.cap * 7; lost += x.u.lost.weekday + x.u.lost.weekend; }); return { profit: p, profitC: pc, units: u, unitsC: uc, util: utl / cap, lost, share: u / (u + uc) }; }); return { res, tot }; }
+function renderRoundTables(){
+  const { res, tot } = roundResults(); const regs = activeRegs(); let html = "";
+  regs.forEach((r, ri) => { let h = `<h2>${esc(r.nome)}</h2><div class="tbl"><table><tr><th class='l'>Mês</th><th>Frota</th><th>Univ. sem</th><th>Univ. fds</th><th>Conc. sem</th><th>Conc. fds</th><th>Diárias</th><th>Lucro previsto</th><th>Lucro observado</th><th>Acum.</th><th>Share</th><th>Util sem</th><th>Util fds</th><th>Não atend.</th><th>Lucro conc.</th><th>Util conc. sem</th></tr>`; let c = 0;
+    res[r.id].rows.forEach((row, k) => { c += row.r.u.profit; const per = R.months[k].per[r.id]; h += `<tr class="${k === R.cur ? "cur" : R.months[k].done ? "done" : ""}"><td class='l'>${stepLabel(row.step)}${R.months[k].done ? " ✓" : ""}</td><td>${fmt0(row.capU)}</td><td>${row.pu[0]}</td><td>${row.pu[1]}</td><td>${row.pc[0]}</td><td>${row.pc[1]}</td><td>${fmt0(row.r.u.units)}</td><td>${fmtK(row.r.u.profit)}</td><td>${per.obsProfit === null ? "" : fmtK(per.obsProfit)}</td><td>${fmtK(c)}</td><td>${pct(row.r.share)}</td><td>${pct0(row.r.u.util.weekday)}</td><td>${pct0(row.r.u.util.weekend)}</td><td>${fmt0(row.r.u.lost.weekday + row.r.u.lost.weekend)}</td><td>${fmtK(row.r.c.profit)}</td><td>${pct0(row.r.c.util.weekday)}</td></tr>`; });
+    html += h + "</table></div>"; });
+  html += `<h2>Florida <span class="pill">total das regiões em jogo${regs.length === 1 ? ": igual a " + esc(regs[0].nome) : ""}</span></h2><div class='tbl'><table><tr><th class='l'>Mês</th><th>Lucro</th><th>Acum.</th><th>Diárias</th><th>Share</th><th>Util. média</th><th>Não atend.</th><th>Lucro conc.</th></tr>`;
+  let c2 = 0; tot.forEach((t, k) => { c2 += t.profit; html += `<tr class="${k === R.cur ? "cur" : R.months[k].done ? "done" : ""}"><td class='l'>${stepLabel(R.months[k].step)}</td><td>${fmtK(t.profit)}</td><td>${fmtK(c2)}</td><td>${fmt0(t.units)}</td><td>${pct(t.share)}</td><td>${pct0(t.util)}</td><td>${fmt0(t.lost)}</td><td>${fmtK(t.profitC)}</td></tr>`; }); html += "</table></div>";
+  $("r-tables").innerHTML = html;
+}
+
+// ---- passo 5: resultados
+function renderResults(){
+  formToParams(); ensureRoundRegs(); const { res, tot } = roundResults(); const regs = activeRegs(); const n = R.months.length;
+  const cum = tot.reduce((a, t) => a + t.profit, 0), cumC = tot.reduce((a, t) => a + t.profitC, 0), units = tot.reduce((a, t) => a + t.units, 0);
+  // referencia: manter 43/32 com o mesmo concorrente
+  let refCum = 0; regs.forEach(r => { res[r.id].rows.forEach(row => { refCum += monthCalc(P, 43, 32, row.pc[0], row.pc[1], r, { step: row.step, capU: row.capU }).u.profit; }); });
+  const totFleet = regs.reduce((a, r) => a + R.months[0].per[r.id].capU, 0);
+  $("r-kpis").innerHTML = `<div class="kpi" style="border-top-color:var(--red)"><div class="k">Região</div><div class="v" style="font-family:var(--font-display)">Florida</div><div class="d">${regs.map(r => r.nome).join(" + ")}</div></div>` + kpi("1 · Lucro acumulado", fmtK(cum), "hero u", { text: (cum >= refCum ? "+" : "−") + fmtK(Math.abs(cum - refCum)) + " vs manter 43/32", cls: cum >= refCum ? "up" : "down" }) + kpi("2 · Share final", pct(tot[n-1].share), "u") + kpi("3 · Utilização média", pct0(tot.reduce((a, t) => a + t.util, 0) / n), "u") + kpi("4 · Lucro do último mês", fmtK(tot[n-1].profit), "u") + kpi("5 · Diárias acumuladas", fmt0(units), "u") + kpi("Lucro acumulado do concorrente", fmtK(cumC), "c") + kpi("Frota no 1º mês", fmt0(totFleet), "g");
+  const cats = R.months.map(m => stepLabel(m.step)); const xt = R.months.map((m, k) => ({ x: k, label: stepLabel(m.step) })); const multi = regs.length > 1; const r0 = regs[0];
+  colChart($("ch-r-profit"), cats, [{ name: "Universal", color: S.u, values: tot.map(t => t.profit) }, { name: "Concorrente", color: S.c, values: tot.map(t => t.profitC) }], { title: "Lucro mensal · Florida", yFmt: fmtKs });
+  let acc = 0; lineChart($("ch-r-cum"), [{ name: "Universal", color: S.u, data: tot.map((t, k) => ({ x: k, y: (acc += t.profit) })) }], { title: "Lucro acumulado da Universal · Florida", yFmt: fmtKs, xTicks: xt, yMin: 0, area: true, endLabel: true });
+  lineChart($("ch-r-pwd"), multi ? regs.map((r, i) => ({ name: r.nome + " · Univ.", color: S.r[i % S.r.length], data: res[r.id].rows.map((x, k) => ({ x: k, y: x.pu[0] })) })) : [{ name: "Universal", color: S.u, data: res[r0.id].rows.map((x, k) => ({ x: k, y: x.pu[0] })) }, { name: "Concorrente", color: S.c, data: res[r0.id].rows.map((x, k) => ({ x: k, y: x.pc[0] })) }], { title: "Preço de semana", yFmt: v => "$" + v, xTicks: xt });
+  lineChart($("ch-r-pwe"), multi ? regs.map((r, i) => ({ name: r.nome + " · Univ.", color: S.r[i % S.r.length], data: res[r.id].rows.map((x, k) => ({ x: k, y: x.pu[1] })) })) : [{ name: "Universal", color: S.u, data: res[r0.id].rows.map((x, k) => ({ x: k, y: x.pu[1] })) }, { name: "Concorrente", color: S.c, data: res[r0.id].rows.map((x, k) => ({ x: k, y: x.pc[1] })) }], { title: "Preço de fim de semana", yFmt: v => "$" + v, xTicks: xt });
+  lineChart($("ch-r-util"), multi ? regs.map((r, i) => ({ name: r.nome, color: S.r[i % S.r.length], data: res[r.id].rows.map((x, k) => ({ x: k, y: x.r.u.utilAvg })) })) : [{ name: "Semana", color: S.u, data: res[r0.id].rows.map((x, k) => ({ x: k, y: x.r.u.util.weekday })) }, { name: "Fim de semana", color: S.b, data: res[r0.id].rows.map((x, k) => ({ x: k, y: x.r.u.util.weekend })) }], { title: multi ? "Utilização média por região" : "Utilização da frota da Universal", yFmt: pct0, xTicks: xt, yMin: 0 });
+  lineChart($("ch-r-share"), [{ name: "Universal", color: S.u, data: tot.map((t, k) => ({ x: k, y: t.share })) }], { title: "Market share da Universal · Florida", yFmt: pct0, xTicks: xt, yMin: 0, endLabel: true });
+}
+
+// ---- ferramenta: um mês
+function monthInputs(){ const capV = parseFloat($("m-cap").value); const reg = regById($("m-reg").value); return { reg, puWd: +$("m-pu-wd").value, puWe: +$("m-pu-we").value, pcWd: +$("m-pc-wd").value, pcWe: +$("m-pc-we").value, step: +$("m-step").value, capU: isNaN(capV) ? undefined : capV }; }
+function renderMonth(){
+  formToParams(); fillRegSelects(); const i = monthInputs(); const o = { step: i.step, capU: i.capU };
+  const r = monthCalc(P, i.puWd, i.puWe, i.pcWd, i.pcWe, i.reg, o); const ref = monthCalc(P, +$("m-ref-wd").value, +$("m-ref-we").value, i.pcWd, i.pcWe, i.reg, o);
+  const d = (a, b, f, upGood) => { const dv = a - b; if (Math.abs(dv) < 1e-9) return { text: "igual à referência" }; return { text: (dv > 0 ? "+" : "−") + f(Math.abs(dv)) + " vs " + $("m-ref-wd").value + "/" + $("m-ref-we").value, cls: (dv > 0) === upGood ? "up" : "down" }; };
+  $("m-kpis").innerHTML = kpi("Lucro Universal no mês · " + esc(i.reg.nome), fmtK(r.u.profit), "hero u", d(r.u.profit, ref.u.profit, fmtK, true)) + kpi("Lucro concorrente", fmtK(r.c.profit), "c", d(r.c.profit, ref.c.profit, fmtK, false)) + kpi("Share Universal", pct(r.share), "u", d(r.share*100, ref.share*100, v => v.toFixed(1).replace(".", ",") + " pp", true)) + kpi("Diárias no mês", fmt0(r.u.units), "u", d(r.u.units, ref.u.units, fmt0, true)) + kpi("Utilização semana / fds", pct0(r.u.util.weekday) + " / " + pct0(r.u.util.weekend), "u") + kpi("Pedidos não atendidos", fmt0(r.u.lost.weekday + r.u.lost.weekend), r.u.lost.weekday + r.u.lost.weekend > 0 ? "c" : "");
+  const nm = { business:"Business", tourist:"Turista", weekday:"semana", weekend:"fim de semana" };
+  $("m-cells").innerHTML = "<tr><th class='l'>Célula</th><th>Curva Univ.</th><th>Curva conc.</th><th>Pedidos Univ.</th><th>Pedidos conc.</th><th>Share Univ.</th></tr>" + r.cells.map(c => `<tr><td class='l'>${nm[c.seg]} · ${nm[c.t]}</td><td>${pct0(c.cu)}</td><td>${pct0(c.cc)}</td><td>${fmt0(c.ou)}</td><td>${fmt0(c.oc)}</td><td>${pct(c.shareU)}</td></tr>`).join("") + `<tr><td class='l'><b>Total semana / dia</b></td><td></td><td></td><td>${fmt0(r.u.daily.weekday)}</td><td>${fmt0(r.c.daily.weekday)}</td><td></td></tr><tr><td class='l'><b>Total fim de semana / dia</b></td><td></td><td></td><td>${fmt0(r.u.daily.weekend)}</td><td>${fmt0(r.c.daily.weekend)}</td><td></td></tr>`;
+  const line = (lab, a, b) => `<tr><td class='l'>${lab}</td><td>${fmt0(a)}</td><td>${(a/r.u.cap).toFixed(2)}</td><td>${fmt0(b)}</td></tr>`;
+  $("m-income").innerHTML = "<tr><th class='l'>Linha</th><th>Universal</th><th>por carro</th><th>Concorrente</th></tr>" + line("Receita semana", r.u.revT.weekday, r.c.revT.weekday) + line("Receita fim de semana", r.u.revT.weekend, r.c.revT.weekend) + line("Receita total", r.u.rev, r.c.rev) + line("Custos variáveis", r.u.vc, r.c.vc) + line("Contribuição", r.u.contrib, r.c.contrib) + line("Custo de inventário da frota", r.u.inv, r.c.inv) + line("Outros custos fixos", r.u.oth, r.c.oth) + `<tr><td class='l'><b>Lucro antes de impostos</b></td><td><b>${fmt0(r.u.profit)}</b></td><td>${(r.u.profit/r.u.cap).toFixed(2)}</td><td><b>${fmt0(r.c.profit)}</b></td></tr>`;
+  const bw = +$("be-wd").value, be = +$("be-we").value;
+  const rowBE = (lab, p0, p1, t) => { const cm = p0 - P.uvcU, dp = p1 - p0; const beq = (cm + dp) !== 0 ? -dp/(cm+dp) : NaN; const r1 = monthCalc(P, t === "weekday" ? p1 : i.puWd, t === "weekend" ? p1 : i.puWe, i.pcWd, i.pcWe, i.reg, o); const dq = r1.u.daily[t] / r.u.daily[t] - 1; const dprof = r1.u.profit - r.u.profit; return `<tr><td class='l'>${lab}</td><td>${p0} → ${p1}</td><td>${(100*dp/p0).toFixed(1)}%</td><td>${isNaN(beq) ? "" : (100*beq).toFixed(1) + "%"}</td><td>${(100*dq).toFixed(1)}%</td><td class="${dprof >= 0 ? "ok" : "bad"}">${fmtK(dprof)}</td></tr>`; };
+  $("be-tbl").innerHTML = "<tr><th class='l'></th><th>Preço</th><th>ΔP</th><th>ΔQ breakeven</th><th>ΔQ modelo</th><th>Δ lucro</th></tr>" + rowBE("Semana", i.puWd, bw, "weekday") + rowBE("Fim de semana", i.puWe, be, "weekend");
+  const lo = +$("br-wd-lo").value, hi = +$("br-wd-hi").value, loE = +$("br-we-lo").value, hiE = +$("br-we-hi").value;
+  const dW = []; let bW = null; for (let pw = lo; pw <= hi; pw++) { const v = monthCalc(P, pw, i.puWe, i.pcWd, i.pcWe, i.reg, o).u.profit; dW.push({ x: pw, y: v }); if (!bW || v > bW.y) bW = { x: pw, y: v }; }
+  const dE = []; let bE = null; for (let pe = loE; pe <= hiE; pe++) { const v = monthCalc(P, i.puWd, pe, i.pcWd, i.pcWe, i.reg, o).u.profit; dE.push({ x: pe, y: v }); if (!bE || v > bE.y) bE = { x: pe, y: v }; }
+  lineChart($("ch-profit-wd"), [{ name: "Lucro mensal", color: S.u, data: dW }], { title: "Lucro mensal pelo preço de semana", sub: `fim de semana fixo em ${i.puWe}; concorrente em ${i.pcWd}/${i.pcWe}`, yFmt: fmtKs, xFmt: v => "$" + v, area: true, marks: [{ x: i.puWd, y: r.u.profit, label: "atual " + i.puWd, color: S.u }, { x: bW.x, y: bW.y, label: "ótimo " + bW.x, color: S.c }], refX: [{ x: i.pcWd, label: "conc. " + i.pcWd, color: S.c }] });
+  lineChart($("ch-profit-we"), [{ name: "Lucro mensal", color: S.u, data: dE }], { title: "Lucro mensal pelo preço de fim de semana", sub: `semana fixa em ${i.puWd}; concorrente em ${i.pcWd}/${i.pcWe}`, yFmt: fmtKs, xFmt: v => "$" + v, area: true, marks: [{ x: i.puWe, y: r.u.profit, label: "atual " + i.puWe, color: S.u }, { x: bE.x, y: bE.y, label: "ótimo " + bE.x, color: S.c }], refX: [{ x: i.pcWe, label: "conc. " + i.pcWe, color: S.c }] });
+  hbarChart($("ch-util"), [{ label: "Universal · semana", value: r.u.util.weekday, color: S.u }, { label: "Universal · fim de semana", value: r.u.util.weekend, color: S.u }, { label: "Concorrente · semana", value: r.c.util.weekday, color: S.c }, { label: "Concorrente · fim de semana", value: r.c.util.weekend, color: S.c }], { title: "Utilização da frota", sub: "a linha marca 100%", fmt: pct0, max: 1.08, ref: { value: 1, label: "100%" }, ml: 170, legend: `<div class="legend"><span><i style="background:${S.u}"></i>Universal</span><span><i style="background:${S.c}"></i>Concorrente</span></div>` });
+  hbarChart($("ch-income"), [{ label: "Receita", value: r.u.rev, color: S.u }, { label: "Custos variáveis", value: -r.u.vc, color: S.c }, { label: "Contribuição", value: r.u.contrib, color: S.u }, { label: "Inventário da frota", value: -r.u.inv, color: S.c }, { label: "Outros fixos", value: -r.u.oth, color: S.c }, { label: "Lucro", value: r.u.profit, color: S.u }], { title: "De receita a lucro (Universal, mês)", fmt: fmtK, ml: 130, legend: `<div class="legend"><span><i style="background:${S.u}"></i>Entradas e saldos</span><span><i style="background:${S.c}"></i>Custos</span></div>` });
+  renderHeat(i, o);
+}
+const RAMP = ["#f9e3e6","#f3c6cd","#eca9b3","#e48c9a","#da6f82","#cf526b","#c33857","#a6192e","#8f1527","#781220","#610e19","#4a0b13"];
+function renderHeat(i, o){ const lo = +$("hm-wd-lo").value, hi = +$("hm-wd-hi").value, loE = +$("hm-we-lo").value, hiE = +$("hm-we-hi").value, st = Math.max(1, +$("hm-step").value); const vals = []; let mn = Infinity, mx = -Infinity;
+  for (let pw = lo; pw <= hi; pw += st) { const row = []; for (let pe = loE; pe <= hiE; pe += st) { const v = monthCalc(P, pw, pe, i.pcWd, i.pcWe, i.reg, o).u.profit; row.push(v); mn = Math.min(mn, v); mx = Math.max(mx, v); } vals.push(row); }
+  let h = "<tr><th class='l'>semana \\ fds</th>"; for (let pe = loE; pe <= hiE; pe += st) h += `<th>${pe}</th>`; h += "</tr>";
+  vals.forEach((row, ri) => { h += `<tr><td class='l'><b>${lo + ri*st}</b></td>` + row.map((v, ci) => { const a = mx > mn ? (v - mn) / (mx - mn) : 0; const k = Math.min(RAMP.length-1, Math.floor(a * RAMP.length)); return `<td style="background:${RAMP[k]};color:${k >= 5 ? "#fff" : "#1d1d1b"}" class="${v === mx ? "best" : ""}" title="${lo + ri*st} / ${loE + ci*st}: ${fmt0(v)}">${fmt0(v/1000)}</td>`; }).join("") + "</tr>"; }); $("heat").innerHTML = h; }
+$("panel-month").addEventListener("change", renderMonth);
+$("btn-br").addEventListener("click", () => { formToParams(); const i = monthInputs(); const b = bestResponse(P, i.pcWd, i.pcWe, i.reg, { step: i.step, capU: i.capU }, +$("br-wd-lo").value, +$("br-wd-hi").value, +$("br-we-lo").value, +$("br-we-hi").value); $("br-out").textContent = `Melhor resposta: ${b.pw} / ${b.pe}, lucro ${fmtK(b.profit)} no mês.`; $("m-pu-wd").value = b.pw; $("m-pu-we").value = b.pe; renderMonth(); });
+
+// ---- ferramenta: políticas
+function parsePolicy(line){ line = line.trim().toLowerCase(); if (!line) return null; let m;
+  if (line === "melhor resposta" || line === "mr") return { name: "melhor resposta", fn: (k, hu, hc, rp, pc, mo, reg) => { const b = bestResponse(P, pc[0], pc[1], reg, { step: mo.step, capU: mo.capU }, 35, 75, 25, 60); return [b.pw, b.pe]; } };
+  if (line === "seguir") return { name: "seguir o concorrente", fn: (k, hu, hc, rp, pc) => pc.slice() };
+  if ((m = line.match(/^undercut\s+(\d+)/))) return { name: "undercut " + m[1], fn: (k, hu, hc, rp, pc) => [pc[0] - +m[1], pc[1] - +m[1]] };
+  if ((m = line.match(/^escada\s+(\d+)\/(\d+)\s*->\s*(\d+)\/(\d+)\s*\+(\d+)/))) { const s = [+m[1], +m[2]], t = [+m[3], +m[4]], st = +m[5]; return { name: line, fn: k => [Math.min(t[0], s[0] + st*k), Math.min(t[1], s[1] + st*k)] }; }
+  if ((m = line.match(/^seq\s+(.*)/))) { const seq = m[1].split(",").map(x => x.trim().split("/").map(Number)); return { name: "seq " + seq.length + " meses", fn: k => seq[Math.min(k, seq.length-1)] }; }
+  if ((m = line.match(/^(\d+)\s*\/\s*(\d+)$/))) return { name: m[1] + "/" + m[2], fn: () => [+m[1], +m[2]] }; return null; }
+$("btn-cmp").addEventListener("click", () => {
+  formToParams(); const reg = regById($("cmp-reg").value); const pols = $("cmp-pols").value.split("\n").map(parsePolicy).filter(Boolean); const n = Math.max(1, +$("cmp-n").value), start = +$("cmp-start").value; const capV = parseFloat($("cmp-cap").value); const capU = isNaN(capV) ? reg.capU : capV;
+  const comps = [["parado","Parado"],["cap","Administra cap."],["tft","Tit for tat"],["pred","Predatório"],["grad","Sobe gradual"]];
+  let h = "<tr><th class='l'>Política</th>" + comps.map(c => `<th>${c[1]}</th>`).join("") + "<th>Pior</th><th>Média</th><th>Share final (parado)</th><th>Util. média (parado)</th></tr>"; const bestCol = comps.map(() => -Infinity); const results = [];
+  for (const pol of pols) { const vals = []; let shareP = 0, utilP = 0;
+    comps.forEach(([ck], ci) => { const cfg = { reg, prevU: reg.prevU, prevC: reg.prevC, startStep: start, comp: ck, c0: reg.c0, months: [], policy: (k, hu, hc, rp, pc, mo) => pol.fn(k, hu, hc, rp, pc, mo, reg) }; for (let k = 0; k < n; k++) cfg.months.push({ step: start + k, pu: null, pc: null, capU }); const r = runRound(P, cfg); vals.push(r.cum); bestCol[ci] = Math.max(bestCol[ci], r.cum); if (ck === "parado") { shareP = r.shareFinal; utilP = r.utilAvg; } });
+    results.push({ pol, vals, shareP, utilP }); }
+  results.forEach(({ pol, vals, shareP, utilP }) => { h += `<tr><td class='l'>${esc(pol.name)}</td>` + vals.map((v, ci) => `<td class="${v === bestCol[ci] ? "best" : ""}">${(v/1e6).toFixed(2)} M</td>`).join("") + `<td>${(Math.min(...vals)/1e6).toFixed(2)} M</td><td>${(vals.reduce((a,b)=>a+b,0)/vals.length/1e6).toFixed(2)} M</td><td>${pct(shareP)}</td><td>${pct0(utilP)}</td></tr>`; });
+  $("cmp-tbl").innerHTML = h; const sorted = results.slice().sort((a, b) => b.vals[0] - a.vals[0]);
+  hbarChart($("ch-cmp"), sorted.map(x => ({ label: x.pol.name, value: x.vals[0], color: S.u, mark: Math.min(...x.vals) })), { title: `Lucro acumulado em ${n} meses por política · ${reg.nome}`, sub: "barra: concorrente parado; ponto: pior caso entre os cinco comportamentos", fmt: fmtK, ml: 190, barName: "Concorrente parado", markName: "Pior caso" });
+});
+
+// ---- dados reais e checagem
+function parseNum(v){ if (v === "" || v === null || v === undefined) return null; const n = parseFloat(String(v).replace("%", "").replace(",", ".")); return isNaN(n) ? null : n; }
+function frac(v){ if (v === null) return null; return v > 1.5 ? v / 100 : v; }
+function renderData(){
+  let h = "<tr><th class='l'>Região</th><th class='l'>Mês</th><th>Univ. sem</th><th>Univ. fds</th><th>Conc. sem</th><th>Conc. fds</th><th>Lucro</th><th>Share</th><th>Util sem</th><th>Util fds</th><th>Diárias</th><th class='l'>Fonte</th><th></th></tr>";
+  DATA.forEach((d, i) => { const f = (k, w) => `<input type="text" value="${d[k] === null || d[k] === undefined ? "" : esc(d[k])}" data-i="${i}" data-f="${k}" style="width:${w||62}px" id="dt-${k}-${i}">`;
+    h += `<tr><td class='l'>${f("reg", 80)}</td><td class='l'><select data-i="${i}" data-f="step" id="dt-step-${i}">${MONTHS.slice(0,15).map((m, s) => `<option value="${s}" ${s === d.step ? "selected" : ""}>${m} (${s})</option>`).join("")}</select></td><td>${f("puw")}</td><td>${f("pue")}</td><td>${f("pcw")}</td><td>${f("pce")}</td><td>${f("profit", 90)}</td><td>${f("share")}</td><td>${f("uwd")}</td><td>${f("uwe")}</td><td>${f("sales", 80)}</td><td class='l'>${f("fonte", 120)}</td><td><button class="b sec sm" data-del="${i}">×</button></td></tr>`; });
+  $("dt-tbl").innerHTML = h;
+}
+$("dt-tbl").addEventListener("change", e => { const el = e.target; if (el.dataset.i === undefined) return; const d = DATA[+el.dataset.i], f = el.dataset.f; d[f] = (f === "reg" || f === "fonte") ? el.value : (f === "step" ? +el.value : (f === "share" || f === "uwd" || f === "uwe") ? frac(parseNum(el.value)) : parseNum(el.value)); renderCheck(); });
+$("dt-tbl").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (!b) return; DATA.splice(+b.dataset.del, 1); renderData(); renderCheck(); });
+$("dt-add").addEventListener("click", () => { const last = DATA[DATA.length-1]; DATA.push({ reg: activeRegs()[0].nome, step: last ? Math.min(14, last.step + 1) : 4, puw: 51, pue: 39, pcw: 44, pce: 28, profit: null, share: null, uwd: null, uwe: null, sales: null, fonte: "digitado" }); renderData(); });
+$("dt-clear").addEventListener("click", () => { DATA = []; renderData(); renderCheck(); });
+$("dt-paste").addEventListener("click", () => { const lines = $("dt-io").value.split("\n").map(l => l.trim()).filter(Boolean); let n = 0;
+  for (const ln of lines) { const c = ln.split(/\t|;|,(?=\s*[A-Za-z0-9])/).map(x => x.trim()); if (c.length < 6) continue; const stepI = MONTHS.slice(0,15).findIndex(m => m.toLowerCase() === c[1].slice(0,3).toLowerCase()); const stepN = isNaN(parseInt(c[1])) ? (stepI < 0 ? 4 : stepI) : parseInt(c[1]);
+    DATA.push({ reg: c[0], step: stepN, puw: parseNum(c[2]), pue: parseNum(c[3]), pcw: parseNum(c[4]), pce: parseNum(c[5]), profit: parseNum(c[6]), share: frac(parseNum(c[7])), uwd: frac(parseNum(c[8])), uwe: frac(parseNum(c[9])), sales: parseNum(c[10]), fonte: "colado" }); n++; }
+  renderData(); renderCheck(); toast(n + " linha(s) importada(s)"); });
+$("dt-export").addEventListener("click", () => { $("dt-io").value = DATA.map(d => [d.reg, stepLabel(d.step), d.puw, d.pue, d.pcw, d.pce, d.profit, d.share, d.uwd, d.uwe, d.sales].map(v => v === null || v === undefined ? "" : v).join("; ")).join("\n"); copyText($("dt-io").value); });
+$("dt-to-round").addEventListener("click", () => { ensureRoundRegs(); let n = 0; DATA.forEach(d => { const reg = REG.find(r => r.nome.toLowerCase() === String(d.reg).toLowerCase()); if (!reg || reg.ativa === false) return; const k = d.step - R.startStep; if (k < 0 || k >= R.months.length) return; const m = R.months[k].per[reg.id]; if (!m) return; if (d.pcw !== null && d.pce !== null) m.pc = [d.pcw, d.pce]; if (d.puw !== null && d.pue !== null) m.pu = [d.puw, d.pue]; if (d.profit !== null) m.obsProfit = d.profit; n++; }); renderS4(); toast(n + " mês(es) levados para o passo 4"); });
+function renderCheck(){
+  formToParams(); const rows = DATA.filter(d => d.puw !== null && d.pcw !== null);
+  let h = "<tr><th class='l'>Região</th><th class='l'>Mês</th><th class='l'>Fonte</th><th>Preços</th><th>Lucro obs.</th><th>Modelo</th><th>Dif.</th><th>Share obs.</th><th>Modelo</th><th>Util sem obs.</th><th>Modelo</th><th>Util fds obs.</th><th>Modelo</th><th>Diárias obs.</th><th>Modelo</th><th>Status</th></tr>";
+  const cats = [], obsP = [], modP = [], obsS = [], modS = [];
+  rows.forEach(o => { const reg = REG.find(r => r.nome.toLowerCase() === String(o.reg).toLowerCase()) || REG[0]; const r = monthCalc(P, o.puw, o.pue, o.pcw, o.pce, reg, { step: o.step });
+    const okP = o.profit === null || o.profit === undefined || Math.abs(r.u.profit/o.profit - 1) < 0.005; const okS = o.share === null || o.share === undefined || Math.abs(r.share - o.share) < 0.004; const ok = okP && okS; const v = (x, f) => (x === null || x === undefined) ? "" : f(x);
+    h += `<tr><td class='l'>${esc(o.reg)}</td><td class='l'>${stepLabel(o.step)}</td><td class='l'>${esc(o.fonte || "")}</td><td>${o.puw}/${o.pue} vs ${o.pcw}/${o.pce}</td><td>${v(o.profit, fmt0)}</td><td>${fmt0(r.u.profit)}</td><td>${o.profit ? fmt0(r.u.profit - o.profit) : ""}</td><td>${v(o.share, pct)}</td><td>${pct(r.share)}</td><td>${v(o.uwd, pct)}</td><td>${pct(r.u.util.weekday)}</td><td>${v(o.uwe, pct)}</td><td>${pct(r.u.util.weekend)}</td><td>${v(o.sales, fmt0)}</td><td>${fmt0(r.u.units)}</td><td class="${ok ? "ok" : "bad"}">${ok ? "bate" : "difere"}</td></tr>`;
+    cats.push(stepLabel(o.step)); obsP.push(o.profit || 0); modP.push(r.u.profit); obsS.push(o.share || 0); modS.push(r.share); });
+  $("chk-tbl").innerHTML = h;
+  colChart($("ch-chk-profit"), cats, [{ name: "Observado na tela", color: S.u, values: obsP }, { name: "Modelo", color: S.b, values: modP }], { title: "Lucro mensal da Universal: observado e modelo", yFmt: fmtKs });
+  colChart($("ch-chk-share"), cats, [{ name: "Observado na tela", color: S.u, values: obsS }, { name: "Modelo", color: S.b, values: modS }], { title: "Market share: observado e modelo", yFmt: pct0 });
+  const vars = [["Base Daily Vehicle Demand","1.000","demanda base por dia"],["Weekly Demand[business, weekday / weekend]","1,0 / 0,1","pesos das células"],["Weekly Demand[tourist, weekday / weekend]","0,5 / 1,0",""],["Region Demand[1,·] · Region and Segment Demand","1 · 2","Tampa"],["Number of Competitors","2",""],["Price Sensitivity[business / tourist]","1 / 4","divisão da demanda compartilhada"],["Initial Attractiveness[Universal / concorrente]","0,9 / 1,1","multiplica os pedidos"],["Market Elasticity[business / tourist]","0,5 / 2","não entra nas contas replicadas"],["BDC / LDC (Normal)","tabelas de 21 pontos","degraus de 5 dólares; Flat e Steep também existem"],["Business / Leisure Curve Style · Offset","0 · 0","normal, sem deslocamento"],["Our Capacity[1] · Competitor Capacity[1]","4.086,8 · 4.259,1","carros por dia"],["Capacity Limit","4.291,1","+5% sobre a frota"],["Allow Capacity Changes · Use Capacity Decision","0 · 0","desligado na rodada de treino"],["Unit Variable Costs[Universal / concorrente]","13 / 11","por diária"],["Unit Capacity Costs[Universal / concorrente]","306,16 / 342,25","por carro por mês"],["Fixed Costs[Universal / concorrente]","860.205 / 1.145.329","outros fixos por mês"],["Days During Time Of Week · Weeks Per Month","5 / 2 · 4,35",""],["Use Seasonality · Demand Growth Rate","0 · 0","desligados"],["Seasonality[1,·,k]","tabela de 15 meses","mar turista 1,09; dez business 0,81"],["Competitor Strategy","0 = Manage Capacity with Price","observado em 17/10: semana corta 1 abaixo de 90% e sobe 1 a partir de 92%; fim de semana parado entre 71% e 78%"],["Use Weekend Pricing · Use Region[1/2/3]","1 · 1/0/0","só Tampa na rodada de treino"],["Our Initial Price[1] · Initial Competitor Price[1]","49/41 · 48/34","julho"],["Orlando","demanda 4x; preços iniciais 45/37 vs 44/37; concorrente em out 31/31","frota é premissa"],["Miami","preços iniciais 45/36 vs 45/33; concorrente em out 33/33","demanda 2x e frota são premissas"]];
+  $("vars-tbl").innerHTML = "<tr><th class='l'>Variável</th><th class='l'>Valor extraído</th><th class='l'>Observação</th></tr>" + vars.map(v => `<tr><td class='l'>${v[0]}</td><td class='l mono'>${v[1]}</td><td class='l'>${v[2]}</td></tr>`).join("");
+}
+
+(function init(){
+  $("m-pu-wd").value = 51; $("m-pu-we").value = 39; $("m-pc-wd").value = 44; $("m-pc-we").value = 28; $("be-wd").value = 55; $("be-we").value = 45;
+  let s = null; try { s = JSON.parse(localStorage.getItem("urc-current") || "null"); } catch(e){}
+  if (s && s.versao === 4) restore(s); else { paramsToForm(); renderRegions(); fillRegSelects(); buildRound(); renderS1(); }
+  renderMonth(); renderData(); renderCheck();
+  let tab = "s1"; try { tab = localStorage.getItem("urc-tab") || "s1"; } catch(e){}
+  go(document.querySelector(`.steps button[data-tab="${tab}"]`) ? tab : "s1");
+  document.body.addEventListener("change", () => { try { localStorage.setItem("urc-current", JSON.stringify(snapshot())); } catch(e){} });
+  document.body.addEventListener("click", e => { if (e.target.closest("button")) { try { localStorage.setItem("urc-current", JSON.stringify(snapshot())); } catch(e2){} } });
+})();
+</script>
+
+</body>
+</html>
