@@ -140,7 +140,7 @@ svg .hit { fill: transparent; } svg .hit:hover { fill: var(--fg); fill-opacity: 
 <ol><li>Marque qual rodada vai jogar. A rodada 1 tem frota fixa; a rodada 2 permite ajustar a frota a cada três meses.</li><li>Confirme o primeiro mês e o número de meses (as rodadas valendo têm 12 meses).</li><li>Se quiser, carregue um cenário guardado ou guarde o atual com um nome.</li></ol></div>
 <div class="choice" id="round-choice">
   <label><input type="radio" name="rmode" value="treino"><b>Rodada de treino</b>Tampa, 11 meses (novembro a setembro), frota fixa. Ligue Tampa no passo 2 para usar.</label>
-  <label class="on"><input type="radio" name="rmode" value="r1"><b>Rodada 1 · frota fixa</b>Orlando e Miami. Outubro já jogado (41/34 e 46/36); decisões de novembro a setembro.</label>
+  <label class="on"><input type="radio" name="rmode" value="r1"><b>Rodada 1 · frota fixa</b>Orlando e Miami. Outubro e novembro já jogados (novembro: 43/36 e 47/37,75); decisões de dezembro a setembro.</label>
   <label><input type="radio" name="rmode" value="r2"><b>Rodada 2 · frota ajustável</b>12 meses. Preços e frota por trimestre (outubro, janeiro, abril, julho).</label>
 </div>
 <div class="grid two" style="margin-top:14px">
@@ -238,7 +238,7 @@ svg .hit { fill: transparent; } svg .hit:hover { fill: var(--fg); fill-opacity: 
 <!-- ================= PASSO 5 · RESULTADOS ================= -->
 <section class="panel" id="panel-s5" hidden>
 <div class="guide"><h2>Passo 5 · Resultados e métricas da gerência</h2>
-<ol><li>As cinco métricas que a gerência avalia, na ordem dela, para a rodada montada no passo 4.</li><li>Compare com a referência "manter os preços do mês anterior à rodada" (em Orlando 41/34, em Miami 46/36) e, na rodada 2, com a rodada 1 (guarde a rodada 1 como cenário e carregue-a para comparar).</li><li>Use "Copiar tabela" no passo 4 para levar os números ao relatório de uma página.</li></ol></div>
+<ol><li>As cinco métricas que a gerência avalia, na ordem dela, para a rodada montada no passo 4.</li><li>Compare com a referência "manter os preços do mês anterior à rodada" (em Orlando 43/36, em Miami 47/37,75) e, na rodada 2, com a rodada 1 (guarde a rodada 1 como cenário e carregue-a para comparar).</li><li>Use "Copiar tabela" no passo 4 para levar os números ao relatório de uma página.</li></ol></div>
 <div class="kpis" id="r-kpis"></div>
 <div class="grid two">
   <div class="card"><div class="chart" id="ch-r-profit"></div></div>
@@ -375,12 +375,12 @@ const DEFAULTS = {
 };
 const CAP_TAMPA = 4086.804915463918, CAPC_TAMPA = 4259.12451958763;
 function defaultRegions(){ return [
-  { id: "orlando", nome: "Orlando", mult: 4, multB: 5.041, multT: 9.4188, attrC: 0.8816, sazB: [0.9593, 0.8901, 0.9467, 1.0, 0.85, 0.91, 0.95, 0.95, 0.95, 0.95, 0.93, 0.91, 0.91, 0.88, 0.89], sazT: [0.9476, 0.9141, 0.8928, 1.0, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93],
-    capU: 22400, capC: 23345, othU: 4714829, othC: 6277822, prevU: [41,34], prevC: [39,32], c0: [39,32], plan: [49,39], comp: "manual", ativa: true,
-    fonte: "calibrado em 25/10 com Price History, Unit Sales, Fleet Size e Capacity Utilization de jul a out; sazonalidade de nov em diante lida da previsão do Market Demand; outros custos fixos são premissa" },
-  { id: "miami", nome: "Miami", mult: 2, multB: 5.9021, multT: 2.4489, attrC: 0.7255, sazB: [0.911, 0.823, 0.8568, 1.0, 0.81, 0.85, 0.89, 0.89, 0.87, 0.85, 0.83, 0.83, 0.86, 0.82, 0.82], sazT: [0.9754, 0.9346, 0.9346, 1.0, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
-    capU: 13600, capC: 14174, othU: 2862575, othC: 3811535, prevU: [46,36], prevC: [43,33], c0: [43,33], plan: [54,42], comp: "manual", ativa: true,
-    fonte: "calibrado em 25/10 com Price History, Unit Sales, Fleet Size e Capacity Utilization de jul a out; sazonalidade de nov em diante lida da previsão do Market Demand; outros custos fixos são premissa" },
+  { id: "orlando", nome: "Orlando", mult: 4, multB: 5.041, multT: 9.4188, attrC: 0.8816, sazB: [0.9593, 0.8901, 0.9467, 1.0, 0.9444, 1.011, 1.0555, 1.0555, 1.0555, 1.0555, 1.0332, 1.011, 1.011, 0.9777, 0.9888], sazT: [0.9476, 0.9141, 0.8928, 1.0, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809, 0.9809],
+    capU: 22424, capC: 23370, uvcU: 15, invU: 344.72, othU: 4970000, othC: 6284739, prevU: [43,36], prevC: [38,31], c0: [38,31], plan: [50,40], comp: "manual", ativa: true,
+    fonte: "calibrado em 25/10 com Price History, Unit Sales, Fleet Size, Capacity Utilization, Market Demand e Net Income de jul a nov; custo variável 15 por diária, inventário e outros fixos lidos do Net Income; sazonalidade de dez em diante é previsão" },
+  { id: "miami", nome: "Miami", mult: 2, multB: 5.9021, multT: 2.4489, attrC: 0.7255, sazB: [0.911, 0.823, 0.8568, 1.0, 0.9074, 0.9522, 0.997, 0.997, 0.9746, 0.9522, 0.9298, 0.9298, 0.9634, 0.9186, 0.9186], sazT: [0.9754, 0.9346, 0.9346, 1.0, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045, 1.1045],
+    capU: 13607, capC: 14181, uvcU: 18, invU: 379.95, othU: 3450000, othC: 3813612, prevU: [47,37.75], prevC: [45,33], c0: [45,33], plan: [55,45], comp: "manual", ativa: true,
+    fonte: "calibrado em 25/10 com Price History, Unit Sales, Fleet Size, Capacity Utilization, Market Demand e Net Income de jul a nov; custo variável 18 por diária, inventário e outros fixos lidos do Net Income; sazonalidade de dez em diante é previsão" },
   { id: "tampa", nome: "Tampa", mult: 1, capU: CAP_TAMPA, capC: CAPC_TAMPA, prevU: [49,41], prevC: [45,29], c0: [44,28], plan: [51,39], comp: "manual", ativa: false, fonte: "rodada de treino (cenário A); fora do jogo na rodada valendo" }
 ]; }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -410,8 +410,8 @@ function monthCalc(P, puWd, puWe, pcWd, pcWe, reg, opts){
     for (const seg of ["business","tourist"]) { const r = cellOrders(P, seg, t, price.u[t], price.c[t], step, reg); od.u[seg] = r.u; od.c[seg] = r.c; out.cells.push({ seg, t, ou: r.u, oc: r.c, shareU: r.u / (r.u + r.c), cu: r.cu, cc: r.cc }); }
     for (const f of ["u","c"]) { const tot = od[f].business + od[f].tourist; const fill = tot > 0 ? Math.min(1, cap[f] / tot) : 1;
       out[f].util[t] = Math.min(1, tot / cap[f]); out[f].orders[t] = tot; out[f].daily[t] = tot * fill; out[f].lost[t] = tot * (1 - fill) * days[t] * P.weeks;
-      const s = tot * fill * days[t] * P.weeks; const uvc = f === "u" ? P.uvcU : P.uvcC; out[f].sales[t] = s; out[f].revT[t] = s * price[f][t]; out[f].units += s; out[f].rev += s * price[f][t]; out[f].contrib += s * (price[f][t] - uvc); } }
-  out.u.inv = P.invU * cap.u; out.c.inv = P.invC * cap.c; out.u.oth = (reg.othU !== undefined && reg.othU !== null && reg.othU !== "") ? (P.othMode === "carro" ? (+reg.othU / reg.capU) * cap.u : +reg.othU) : (P.othMode === "carro" ? (P.othU / CAP_TAMPA) * cap.u : P.othU * mult); out.c.oth = (reg.othC !== undefined && reg.othC !== null && reg.othC !== "") ? +reg.othC : P.othC * mult;
+      const s = tot * fill * days[t] * P.weeks; const uvc = f === "u" ? ((reg.uvcU !== undefined && reg.uvcU !== null && reg.uvcU !== "") ? +reg.uvcU : P.uvcU) : P.uvcC; out[f].sales[t] = s; out[f].revT[t] = s * price[f][t]; out[f].units += s; out[f].rev += s * price[f][t]; out[f].contrib += s * (price[f][t] - uvc); } }
+  out.u.inv = ((reg.invU !== undefined && reg.invU !== null && reg.invU !== "") ? +reg.invU : P.invU) * cap.u; out.c.inv = P.invC * cap.c; out.u.oth = (reg.othU !== undefined && reg.othU !== null && reg.othU !== "") ? (P.othMode === "carro" ? (+reg.othU / reg.capU) * cap.u : +reg.othU) : (P.othMode === "carro" ? (P.othU / CAP_TAMPA) * cap.u : P.othU * mult); out.c.oth = (reg.othC !== undefined && reg.othC !== null && reg.othC !== "") ? +reg.othC : P.othC * mult;
   for (const f of ["u","c"]) { out[f].vc = out[f].rev - out[f].contrib; out[f].profit = out[f].contrib - out[f].inv - out[f].oth; out[f].utilAvg = (out[f].util.weekday * P.daysWd + out[f].util.weekend * P.daysWe) / (P.daysWd + P.daysWe); out[f].cap = cap[f]; }
   out.share = out.u.units / (out.u.units + out.c.units); return out;
 }
@@ -436,14 +436,16 @@ function runRound(P, cfg){
   const last = rows[rows.length-1].r; return { rows, cum, units, utilAvg: utils.reduce((a,b)=>a+b,0)/utils.length, shareFinal: last.share, lastProfit: last.u.profit };
 }
 const OBSERVED = [
+  { reg:"Orlando", step:4, puw:43, pue:36, pcw:38, pce:31, sales:545000, profit:1520000, uwd:0.81, uwe:0.76, share:0.47, fonte:"rodada valendo, novembro" },
+  { reg:"Miami", step:4, puw:47, pue:37.75, pcw:45, pce:33, sales:347000, profit:950000, uwd:1.0, uwe:0.43, share:0.522, fonte:"rodada valendo, novembro" },
   { reg:"Orlando", step:0, puw:45, pue:37, pcw:44, pce:37, sales:552000, profit:null, uwd:0.81, uwe:0.8, share:0.496, fonte:"rodada valendo, tela 25/10" },
   { reg:"Orlando", step:1, puw:45, pue:37, pcw:41, pce:34, sales:506000, profit:null, uwd:0.75, uwe:0.73, share:0.477, fonte:"rodada valendo, tela 25/10" },
-  { reg:"Orlando", step:2, puw:45, pue:37, pcw:39, pce:33, sales:503000, profit:null, uwd:0.75, uwe:0.7, share:0.468, fonte:"rodada valendo, tela 25/10" },
-  { reg:"Orlando", step:3, puw:41, pue:34, pcw:39, pce:32, sales:605000, profit:null, uwd:0.9, uwe:0.86, share:0.487, fonte:"rodada valendo, tela 25/10" },
+  { reg:"Orlando", step:2, puw:45, pue:37, pcw:39, pce:33, sales:503000, profit:1320000, uwd:0.75, uwe:0.7, share:0.468, fonte:"rodada valendo, tela 25/10" },
+  { reg:"Orlando", step:3, puw:41, pue:34, pcw:39, pce:32, sales:605000, profit:1870000, uwd:0.9, uwe:0.86, share:0.487, fonte:"rodada valendo, tela 25/10" },
   { reg:"Miami", step:0, puw:45, pue:36, pcw:45, pce:33, sales:345000, profit:null, uwd:1.0, uwe:0.41, share:0.526, fonte:"rodada valendo, tela 25/10" },
   { reg:"Miami", step:1, puw:45, pue:36, pcw:46, pce:33, sales:332000, profit:null, uwd:0.97, uwe:0.39, share:0.549, fonte:"rodada valendo, tela 25/10" },
-  { reg:"Miami", step:2, puw:45, pue:36, pcw:44, pce:33, sales:343000, profit:null, uwd:1.0, uwe:0.4, share:0.544, fonte:"rodada valendo, tela 25/10" },
-  { reg:"Miami", step:3, puw:46, pue:36, pcw:43, pce:33, sales:347000, profit:null, uwd:1.0, uwe:0.43, share:0.499, fonte:"rodada valendo, tela 25/10" },
+  { reg:"Miami", step:2, puw:45, pue:36, pcw:44, pce:33, sales:343000, profit:210000, uwd:1.0, uwe:0.4, share:0.544, fonte:"rodada valendo, tela 25/10" },
+  { reg:"Miami", step:3, puw:46, pue:36, pcw:43, pce:33, sales:347000, profit:580000, uwd:1.0, uwe:0.43, share:0.499, fonte:"rodada valendo, tela 25/10" },
   { reg:"Tampa", step:0, puw:49, pue:41, pcw:48, pce:34, sales:78200, profit:582591, uwd:0.709, uwe:0.426, share:0.429, fonte:"histórico" },
   { reg:"Tampa", step:1, puw:49, pue:41, pcw:46, pce:30, sales:76158, profit:519218, uwd:0.701, uwe:0.390, share:0.410, fonte:"histórico" },
   { reg:"Tampa", step:2, puw:49, pue:41, pcw:45, pce:29, sales:75419, profit:495349, uwd:0.696, uwe:0.381, share:0.403, fonte:"histórico" },
@@ -502,7 +504,7 @@ function hbarChart(el, rows, opt){
 // ======================= estado =======================
 let P = clone(DEFAULTS);
 let REG = defaultRegions();
-let R = { mode: "r1", startStep: 4, n: 11, cur: 0, months: [] };   // months[k] = { step, done, per: { regId: { pu, pc, capU, obsProfit, obsShare } } }
+let R = { mode: "r1", startStep: 5, n: 10, cur: 0, months: [] };   // months[k] = { step, done, per: { regId: { pu, pc, capU, obsProfit, obsShare } } }
 let DATA = clone(OBSERVED);
 const $ = id => document.getElementById(id);
 const fmt0 = n => Math.round(n).toLocaleString("pt-BR");
@@ -531,7 +533,7 @@ document.querySelectorAll(".steps button").forEach(b => b.addEventListener("clic
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
 
 // ---- passo 1
-const MODE_DEF = { treino: { start: 4, n: 11 }, r1: { start: 4, n: 11 }, r2: { start: 3, n: 12 } };
+const MODE_DEF = { treino: { start: 4, n: 11 }, r1: { start: 5, n: 10 }, r2: { start: 3, n: 12 } };
 function renderS1(){ document.querySelectorAll("#round-choice label").forEach(l => { const inp = l.querySelector("input"); inp.checked = inp.value === R.mode; l.classList.toggle("on", inp.checked); }); $("r-start").value = R.startStep; $("r-n").value = R.n; renderScenarioList(); }
 $("round-choice").addEventListener("change", e => { R.mode = e.target.value; R.startStep = MODE_DEF[R.mode].start; R.n = MODE_DEF[R.mode].n; buildRound(); renderS1(); toast(R.mode === "r2" ? "Rodada 2: frota editável por trimestre" : "Frota fixa nesta rodada"); });
 $("r-start").addEventListener("change", () => { R.startStep = +$("r-start").value; buildRound(); });
@@ -540,7 +542,7 @@ function fillMonthSelect(sel, def){ sel.innerHTML = MONTHS.slice(0, 15).map((m, 
 fillMonthSelect($("r-start"), 4); fillMonthSelect($("m-step"), 5); fillMonthSelect($("cmp-start"), 5);
 
 // ---- cenários
-function snapshot(){ formToParams(); return { params: P, regions: REG, round: R, data: DATA, versao: 5 }; }
+function snapshot(){ formToParams(); return { params: P, regions: REG, round: R, data: DATA, versao: 6 }; }
 function restore(s){ P = Object.assign(clone(DEFAULTS), s.params || {}); REG = s.regions && s.regions.length ? s.regions : defaultRegions(); R = s.round && s.round.months ? s.round : { mode: "treino", startStep: 4, n: 11, cur: 0, months: [] }; DATA = s.data || clone(OBSERVED); paramsToForm(); renderRegions(); fillRegSelects(); if (!R.months.length) buildRound(); renderS1(); }
 function scenarioStore(){ try { return JSON.parse(localStorage.getItem("urc-scenarios") || "{}"); } catch(e){ return {}; } }
 function scenarioSave(all){ try { localStorage.setItem("urc-scenarios", JSON.stringify(all)); return true; } catch(e){ return false; } }
@@ -565,7 +567,9 @@ function renderRegions(){
       <label class="f"><span>Demanda turista (x Tampa)</span><input type="number" step="0.01" value="${r.multT ?? ""}" data-i="${i}" data-f="multT" id="reg-multt-${i}"></label>
       <label class="f"><span>Demanda relativa única (sem calibração)</span><input type="number" step="0.1" value="${r.mult}" data-i="${i}" data-f="mult" id="reg-mult-${i}"></label>
       <label class="f"><span>Atratividade do concorrente<span class="hint">Tampa 1,1; calibrada pelas vendas dele</span></span><input type="number" step="0.01" value="${r.attrC ?? ""}" data-i="${i}" data-f="attrC" id="reg-attrc-${i}"></label>
-      <label class="f"><span>Outros custos fixos por mês (Universal)<span class="hint">premissa: 210,48 por carro, como Tampa</span></span><input type="number" step="1000" value="${r.othU ?? ""}" data-i="${i}" data-f="othU" id="reg-othu-${i}"></label>
+      <label class="f"><span>Custo variável por diária (Universal)<span class="hint">Net Income: Orlando 15, Miami 18</span></span><input type="number" step="0.5" value="${r.uvcU ?? ""}" data-i="${i}" data-f="uvcU" id="reg-uvcu-${i}"></label>
+      <label class="f"><span>Custo de inventário por carro/mês</span><input type="number" step="1" value="${r.invU ?? ""}" data-i="${i}" data-f="invU" id="reg-invu-${i}"></label>
+      <label class="f"><span>Outros custos fixos por mês (Universal)<span class="hint">linha Other Fixed Costs do Net Income</span></span><input type="number" step="1000" value="${r.othU ?? ""}" data-i="${i}" data-f="othU" id="reg-othu-${i}"></label>
       <label class="f"><span>Preço planejado · semana</span><input type="number" value="${(r.plan||[51,39])[0]}" data-i="${i}" data-f="plan0" id="reg-plan0-${i}"></label>
       <label class="f"><span>Preço planejado · fim de semana</span><input type="number" value="${(r.plan||[51,39])[1]}" data-i="${i}" data-f="plan1" id="reg-plan1-${i}"></label>
       <label class="f"><span>Frota Universal (carros)</span><input type="number" step="10" value="${Math.round(r.capU)}" data-i="${i}" data-f="capU" id="reg-capu-${i}"></label>
@@ -593,7 +597,7 @@ $("reg-list").addEventListener("change", e => { const el = e.target; if (el.data
   else if (f.startsWith("sazB-")) r.sazB[+f.slice(5)] = +v; else if (f.startsWith("sazT-")) r.sazT[+f.slice(5)] = +v;
   else if (f.startsWith("plan")) { r.plan = r.plan || [51,39]; r.plan[+f.slice(-1)] = +v; }
   else if (f.startsWith("prevU")) r.prevU[+f.slice(-1)] = +v; else if (f.startsWith("prevC")) r.prevC[+f.slice(-1)] = +v; else if (f.startsWith("c0")) r.c0[+f.slice(-1)] = +v;
-  else if (["multB","multT","attrC","othU"].includes(f)) r[f] = v === "" ? null : +v; else r[f] = +v;
+  else if (["multB","multT","attrC","othU","uvcU","invU"].includes(f)) r[f] = v === "" ? null : +v; else r[f] = +v;
   renderRegions(); fillRegSelects(); buildRound(); });
 $("reg-list").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (!b) return; if (REG.length === 1) { toast("Mantenha pelo menos uma região"); return; } REG.splice(+b.dataset.del, 1); renderRegions(); fillRegSelects(); buildRound(); });
 $("reg-add").addEventListener("click", () => { const n = REG.length + 1; REG.push({ id: "regiao" + n, nome: "Região " + n, mult: 1, capU: CAP_TAMPA, capC: CAPC_TAMPA, prevU: [49,41], prevC: [45,29], c0: [44,28], comp: "manual", ativa: true, fonte: "nova região: preencha com o que a tela mostrar" }); renderRegions(); fillRegSelects(); buildRound(); });
@@ -804,9 +808,9 @@ function renderCheck(){
 }
 
 (function init(){
-  $("m-pu-wd").value = 49; $("m-pu-we").value = 39; $("m-pc-wd").value = 39; $("m-pc-we").value = 32; $("m-step").value = 4; $("m-ref-wd").value = 41; $("m-ref-we").value = 34; $("be-wd").value = 55; $("be-we").value = 45;
+  $("m-pu-wd").value = 50; $("m-pu-we").value = 40; $("m-pc-wd").value = 38; $("m-pc-we").value = 31; $("m-step").value = 5; $("m-ref-wd").value = 43; $("m-ref-we").value = 36; $("be-wd").value = 55; $("be-we").value = 45;
   let s = null; try { s = JSON.parse(localStorage.getItem("urc-current") || "null"); } catch(e){}
-  if (s && s.versao === 5) restore(s); else { paramsToForm(); renderRegions(); fillRegSelects(); buildRound(); renderS1(); }
+  if (s && s.versao === 6) restore(s); else { paramsToForm(); renderRegions(); fillRegSelects(); buildRound(); renderS1(); }
   renderMonth(); renderData(); renderCheck();
   let tab = "s1"; try { tab = localStorage.getItem("urc-tab") || "s1"; } catch(e){}
   go(document.querySelector(`.steps button[data-tab="${tab}"]`) ? tab : "s1");
